@@ -27,6 +27,7 @@ public class WBResidentialBuildingAI : ResidentialBuildingAI
         base.ModifyMaterialBuffer(buildingID, ref data, material, ref amountDelta);
     }
 
+
     protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
     {
         base.SimulationStepActive(buildingID,ref buildingData,ref frameData);
