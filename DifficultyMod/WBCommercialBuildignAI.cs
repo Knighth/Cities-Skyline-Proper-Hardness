@@ -15,7 +15,7 @@ namespace DifficultyMod
             base.SimulationStepActive(buildingID, ref buildingData, ref frameData);
             if (buildingData.m_fireIntensity != 0 && frameData.m_fireDamage > 12)
             {
-                WBResidentialBuildingAI.ExtraFireSpread(buildingID, ref buildingData, 24, this.m_info.m_size.y);
+                WBResidentialBuildingAI.ExtraFireSpread(buildingID, ref buildingData, 50, this.m_info.m_size.y);
             }
         }
     }

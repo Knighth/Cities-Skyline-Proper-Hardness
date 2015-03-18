@@ -89,13 +89,19 @@ namespace DifficultyMod
             {
                 var vi = PrefabCollection<CitizenInfo>.GetPrefab(i);
                 AdjustResidentAI(vi, mapping);
-            }            
+            }
+
+            //for (uint i = 0; i < PrefabCollection<CitizenInfo>.LoadedCount(); i++)
+            //{
+            //    var vi = PrefabCollection<CitizenInfo>.GetLoaded(i);
+            //    AdjustResidentAI(vi, mapping);
+            //}
 
             mapping = new Dictionary<Type, Type>
             {
                 {typeof (ResidentialBuildingAI), typeof (WBResidentialBuildingAI)},
-                {typeof (ResidentialBuildingAI), typeof (WBResidentialBuildingAI)},
-                {typeof (ResidentialBuildingAI), typeof (WBResidentialBuildingAI)},
+                {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI)},
+                {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI)},
             };
 
             for (uint i = 0; i < PrefabCollection<BuildingInfo>.PrefabCount(); i++)
@@ -134,6 +140,11 @@ namespace DifficultyMod
             if (!componentRemap.TryGetValue(compType, out newCompType))
                 return;
 
+            //if (bi.name.Contains("Child") || bi.name.Contains("Pensioner"))
+            //{
+            //    return;
+            //}
+            DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, bi.name + " " + bi.tag);
             //UnityEngine.Object.Destroy(oldAI,1f);
             CitizenAI newAI = bi.gameObject.AddComponent(newCompType) as CitizenAI;
 

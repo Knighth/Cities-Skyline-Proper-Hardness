@@ -19,28 +19,94 @@ namespace DifficultyMod
                 case TransferManager.TransferReason.Worker2:
                 case TransferManager.TransferReason.Worker3:
                     {
-                        int num = data.m_customBuffer1;
-                        amountDelta = Mathf.Clamp(amountDelta, -num, 1000 - num);
-                        data.m_customBuffer1 = (ushort)(num + amountDelta);
+                        if (data.m_customBuffer1 == 0)
+                        {
+                            data.m_customBuffer1 = (ushort)(100 + WBLevelUp.GetWealthThreshhold(data.Info.m_class.m_level - 1));
+                        }
+
+                        if (amountDelta > 0)
+                        {
+                            DistrictManager instance = Singleton<DistrictManager>.instance;
+                            byte district = instance.GetDistrict(data.m_position);
+                            DistrictPolicies.Taxation taxationPolicies = instance.m_districts.m_buffer[(int)district].m_taxationPolicies;
+                            int taxRate = Singleton<EconomyManager>.instance.GetTaxRate(this.m_info.m_class, taxationPolicies);
+                            amountDelta += (50 - taxRate * 4);
+                            amountDelta = Math.Max(2, amountDelta / CalculateHomeCount(data));
+                        }
+                        else
+                        {
+                            amountDelta = Math.Min(-2, amountDelta / CalculateHomeCount(data));
+                        }
+                        
+                        data.m_customBuffer1 = (ushort)Mathf.Clamp(data.m_customBuffer1 + amountDelta, 1, 30000);
                         return;
                     }
             }
             base.ModifyMaterialBuffer(buildingID, ref data, material, ref amountDelta);
         }
 
+        public static int CalculateHomeCount(Building data)
+        {
+            var iClass = data.Info.m_class;
+            int num;
+            if (iClass.m_subService == ItemClass.SubService.ResidentialLow)
+            {
+                if (iClass.m_level == ItemClass.Level.Level1)
+                {
+                    num = 20;
+                }
+                else if (iClass.m_level == ItemClass.Level.Level2)
+                {
+                    num = 25;
+                }
+                else if (iClass.m_level == ItemClass.Level.Level3)
+                {
+                    num = 30;
+                }
+                else if (iClass.m_level == ItemClass.Level.Level4)
+                {
+                    num = 35;
+                }
+                else
+                {
+                    num = 40;
+                }
+            }
+            else if (iClass.m_level == ItemClass.Level.Level1)
+            {
+                num = 60;
+            }
+            else if (iClass.m_level == ItemClass.Level.Level2)
+            {
+                num = 100;
+            }
+            else if (iClass.m_level == ItemClass.Level.Level3)
+            {
+                num = 130;
+            }
+            else if (iClass.m_level == ItemClass.Level.Level4)
+            {
+                num = 150;
+            }
+            else
+            {
+                num = 160;
+            }
+            return Mathf.Max(100, data.m_width * data.m_length * num) / 100;
+        }
 
         protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
         {
             base.SimulationStepActive(buildingID,ref buildingData,ref frameData);
             Notification.Problem problem = Notification.RemoveProblems(buildingData.m_problems, Notification.Problem.TooFewServices);
-                if (buildingData.m_customBuffer1 > 300)
+            if (buildingData.m_customBuffer1 != 0 && buildingData.m_customBuffer1 < 10)
                 {
                     buildingData.m_outgoingProblemTimer = (byte)Mathf.Min(0xff, buildingData.m_outgoingProblemTimer + 1);
-                    if (buildingData.m_outgoingProblemTimer >= 220)
+                    if (buildingData.m_outgoingProblemTimer >= 200)
                     {
                         problem = Notification.AddProblems(problem, Notification.Problem.MajorProblem | Notification.Problem.TooFewServices);
                     }
-                    else if (buildingData.m_outgoingProblemTimer >= 80)
+                    else if (buildingData.m_outgoingProblemTimer >= 60)
                     {
                         problem = Notification.AddProblems(problem, Notification.Problem.TooFewServices);
                     }
@@ -56,13 +122,17 @@ namespace DifficultyMod
 
                 if (buildingData.m_fireIntensity != 0 && frameData.m_fireDamage > 12)
                 {
-                    WBResidentialBuildingAI.ExtraFireSpread(buildingID, ref buildingData, 24, this.m_info.m_size.y);
+                    WBResidentialBuildingAI.ExtraFireSpread(buildingID, ref buildingData, 50, this.m_info.m_size.y);
                 }
         }
         
         public override string GetLocalizedStatus(ushort buildingID, ref Building data)
         {
-            return base.GetLocalizedStatus(buildingID,ref data) + " $100";
+            var result = base.GetLocalizedStatus(buildingID, ref data) + "  Wealth: " + data.m_customBuffer1.ToString();
+            if (data.Info.m_class.m_level != ItemClass.Level.Level5){
+                result += "/" + WBLevelUp.GetWealthThreshhold(data.Info.m_class.m_level);
+            }
+            return result;
         }
 
 
@@ -84,8 +154,8 @@ namespace DifficultyMod
             vector2.y += sizeY;
             int num = Mathf.Max((int)((vector.x - 72f) / 64f + 135f), 0);
             int num2 = Mathf.Max((int)((vector.y - 72f) / 64f + 135f), 0);
-            int num3 = Mathf.Min((int)((vector2.x + 72f) / 64f + 135f), 269);
-            int num4 = Mathf.Min((int)((vector2.y + 72f) / 64f + 135f), 269);
+            int num3 = Mathf.Min((int)((vector2.x + 72f) / 64f + 140f), 269);
+            int num4 = Mathf.Min((int)((vector2.y + 72f) / 64f + 140f), 269);
             BuildingManager instance = Singleton<BuildingManager>.instance;
             for (int i = num2; i <= num4; i++)
             {
@@ -95,7 +165,7 @@ namespace DifficultyMod
                     int num6 = 0;
                     while (num5 != 0)
                     {
-                        if (num5 != buildingID && Singleton<SimulationManager>.instance.m_randomizer.Int32(300u) < damageAccumulation)
+                        if (num5 != buildingID && Singleton<SimulationManager>.instance.m_randomizer.Int32(150u) < damageAccumulation)
                         {
                             ExtraTrySpreadFire(quad, vector.y, vector2.y, num5, ref instance.m_buildings.m_buffer[(int)num5]);
                         }
