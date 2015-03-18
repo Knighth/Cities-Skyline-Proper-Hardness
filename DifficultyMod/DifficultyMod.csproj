@@ -51,20 +51,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HumanAIMod.cs" />
-    <Compile Include="Initializer.cs" />
+    <Compile Include="ModdingAPI.cs" />
     <Compile Include="WBResidentAI.cs" />
+    <Compile Include="WBIndustrialBuildingAI.cs" />
+    <Compile Include="WBCommercialBuildignAI.cs" />
     <Compile Include="WBResidentialBuildingAI.cs" />
-    <Compile Include="ResidentAIMod.cs" />
-    <Compile Include="CarAIMod.cs" />
-    <Compile Include="PassengerCarAIMod.cs" />
-    <Compile Include="PoliceCarAIMod.cs" />
-    <Compile Include="HearseAIMod.cs" />
-    <Compile Include="GarbageTruckAIMod.cs" />
-    <Compile Include="FireTruckAIMod.cs" />
-    <Compile Include="CargoTruckAIMod.cs" />
-    <Compile Include="BusAIMod.cs" />
-    <Compile Include="AmbulanceAIMod.cs" />
+    <Compile Include="WBPassengerCarAI.cs" />
+    <Compile Include="WBCargoTruckAI.cs" />
     <Compile Include="DifficultyMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

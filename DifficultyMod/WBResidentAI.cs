@@ -13,8 +13,6 @@ using UnityEngine;
 public class WBResidentAI : ResidentAI
 {
     private static Action f__amcache0;
-    static bool sm_initialized;
-
     //public static void Initialize(CitizenInfo originalAmbulance, Transform customPrefabs)
     //{
     //    if (sm_initialized)
@@ -1099,4 +1097,5 @@ public class WBResidentAI : ResidentAI
             }
         }
     }
+
 }

@@ -6,52 +6,145 @@ using ColossalFramework.Plugins;
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
-
-public class WBResidentialBuildingAI : ResidentialBuildingAI
+namespace DifficultyMod
 {
-    public override void ModifyMaterialBuffer(ushort buildingID, ref Building data, TransferManager.TransferReason material, ref int amountDelta)
+    public class WBResidentialBuildingAI : ResidentialBuildingAI
     {
-        switch (material)
+        public override void ModifyMaterialBuffer(ushort buildingID, ref Building data, TransferManager.TransferReason material, ref int amountDelta)
         {
-            case TransferManager.TransferReason.Worker0:
-            case TransferManager.TransferReason.Worker1:
-            case TransferManager.TransferReason.Worker2:
-            case TransferManager.TransferReason.Worker3:
+            switch (material)
+            {
+                case TransferManager.TransferReason.Worker0:
+                case TransferManager.TransferReason.Worker1:
+                case TransferManager.TransferReason.Worker2:
+                case TransferManager.TransferReason.Worker3:
+                    {
+                        int num = data.m_customBuffer1;
+                        amountDelta = Mathf.Clamp(amountDelta, -num, 1000 - num);
+                        data.m_customBuffer1 = (ushort)(num + amountDelta);
+                        return;
+                    }
+            }
+            base.ModifyMaterialBuffer(buildingID, ref data, material, ref amountDelta);
+        }
+
+
+        protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
+        {
+            base.SimulationStepActive(buildingID,ref buildingData,ref frameData);
+            Notification.Problem problem = Notification.RemoveProblems(buildingData.m_problems, Notification.Problem.TooFewServices);
+                if (buildingData.m_customBuffer1 > 300)
                 {
-                    int num = data.m_customBuffer1;
-                    amountDelta = Mathf.Clamp(amountDelta, -num, 1000 - num);
-                    data.m_customBuffer1 = (ushort)(num + amountDelta);
-                    return;
+                    buildingData.m_outgoingProblemTimer = (byte)Mathf.Min(0xff, buildingData.m_outgoingProblemTimer + 1);
+                    if (buildingData.m_outgoingProblemTimer >= 220)
+                    {
+                        problem = Notification.AddProblems(problem, Notification.Problem.MajorProblem | Notification.Problem.TooFewServices);
+                    }
+                    else if (buildingData.m_outgoingProblemTimer >= 80)
+                    {
+                        problem = Notification.AddProblems(problem, Notification.Problem.TooFewServices);
+                    }
+                }
+                else
+                {
+                    buildingData.m_outgoingProblemTimer = 0;
+                }
+                buildingData.m_problems = problem;
+                DistrictManager instance = Singleton<DistrictManager>.instance;
+                byte district = instance.GetDistrict(buildingData.m_position);
+                DistrictPolicies.Services servicePolicies = instance.m_districts.m_buffer[(int)district].m_servicePolicies;
+
+                if (buildingData.m_fireIntensity != 0 && frameData.m_fireDamage > 12)
+                {
+                    WBResidentialBuildingAI.ExtraFireSpread(buildingID, ref buildingData, 24, this.m_info.m_size.y);
                 }
         }
-        base.ModifyMaterialBuffer(buildingID, ref data, material, ref amountDelta);
-    }
+        
+        public override string GetLocalizedStatus(ushort buildingID, ref Building data)
+        {
+            return base.GetLocalizedStatus(buildingID,ref data) + " $100";
+        }
 
 
-    protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
-    {
-        base.SimulationStepActive(buildingID,ref buildingData,ref frameData);
-        Notification.Problem problem = Notification.RemoveProblems(buildingData.m_problems, Notification.Problem.TooFewServices);
-        //if ((buildingData.m_flags & Building.Flags.Active) != Building.Flags.None)
-        //{
-            if (buildingData.m_customBuffer1 > 300)
+        public static void ExtraFireSpread(ushort buildingID, ref Building buildingData, int damageAccumulation,float sizeY)
+        {
+            int width = buildingData.Width;
+            int length = buildingData.Length;
+            Vector2 a = VectorUtils.XZ(buildingData.m_position);
+            Vector2 a2 = new Vector2(Mathf.Cos(buildingData.m_angle), Mathf.Sin(buildingData.m_angle)) * 8f;
+            Vector2 a3 = new Vector2(a2.y, -a2.x);
+            Quad2 quad;
+            quad.a = a - ((float)width * 0.5f + 1.5f) * a2 - ((float)length * 0.5f + 1.5f) * a3;
+            quad.b = a + ((float)width * 0.5f + 1.5f) * a2 - ((float)length * 0.5f + 1.5f) * a3;
+            quad.c = a + ((float)width * 0.5f + 1.5f) * a2 + ((float)length * 0.5f + 1.5f) * a3;
+            quad.d = a - ((float)width * 0.5f + 1.5f) * a2 + ((float)length * 0.5f + 1.5f) * a3;
+            Vector2 vector = quad.Min();
+            Vector2 vector2 = quad.Max();
+            vector.y -= (float)buildingData.m_baseHeight;
+            vector2.y += sizeY;
+            int num = Mathf.Max((int)((vector.x - 72f) / 64f + 135f), 0);
+            int num2 = Mathf.Max((int)((vector.y - 72f) / 64f + 135f), 0);
+            int num3 = Mathf.Min((int)((vector2.x + 72f) / 64f + 135f), 269);
+            int num4 = Mathf.Min((int)((vector2.y + 72f) / 64f + 135f), 269);
+            BuildingManager instance = Singleton<BuildingManager>.instance;
+            for (int i = num2; i <= num4; i++)
             {
-                buildingData.m_outgoingProblemTimer = (byte)Mathf.Min(0xff, buildingData.m_outgoingProblemTimer + 1);
-                if (buildingData.m_outgoingProblemTimer >= 220)
+                for (int j = num; j <= num3; j++)
                 {
-                    problem = Notification.AddProblems(problem, Notification.Problem.MajorProblem | Notification.Problem.TooFewServices);
-                }
-                else if (buildingData.m_outgoingProblemTimer >= 80)
-                {
-                    problem = Notification.AddProblems(problem, Notification.Problem.TooFewServices);
+                    ushort num5 = instance.m_buildingGrid[i * 270 + j];
+                    int num6 = 0;
+                    while (num5 != 0)
+                    {
+                        if (num5 != buildingID && Singleton<SimulationManager>.instance.m_randomizer.Int32(300u) < damageAccumulation)
+                        {
+                            ExtraTrySpreadFire(quad, vector.y, vector2.y, num5, ref instance.m_buildings.m_buffer[(int)num5]);
+                        }
+                        num5 = instance.m_buildings.m_buffer[(int)num5].m_nextGridBuilding;
+                        if (++num6 >= 32768)
+                        {
+                            CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                            break;
+                        }
+                    }
                 }
             }
-            else
-            {
-                buildingData.m_outgoingProblemTimer = 0;
-            }
-        //}
-        buildingData.m_problems = problem;
+        }
 
+        public static void ExtraTrySpreadFire(Quad2 quad, float minY, float maxY, ushort buildingID, ref Building buildingData)
+        {
+            BuildingInfo info = buildingData.Info;
+            int num;
+            int num2;
+            int num3;
+            info.m_buildingAI.GetFireParameters(buildingID, ref buildingData, out num, out num2, out num3);
+            if (num != 0)
+            {
+                DistrictManager instance = Singleton<DistrictManager>.instance;
+                byte district = instance.GetDistrict(buildingData.m_position);
+                DistrictPolicies.Services servicePolicies = instance.m_districts.m_buffer[(int)district].m_servicePolicies;
+                if ((servicePolicies & DistrictPolicies.Services.SmokeDetectors) != DistrictPolicies.Services.None)
+                {
+                    num = num * 75 / 100;
+                }
+            }
+            if (num != 0 && (buildingData.m_flags & (Building.Flags.Completed | Building.Flags.Abandoned)) == Building.Flags.Completed && buildingData.m_fireIntensity == 0 && buildingData.GetLastFrameData().m_fireDamage == 0 && buildingData.OverlapQuad(buildingID, quad, minY, maxY))
+            {
+                float num4 = Singleton<TerrainManager>.instance.WaterLevel(VectorUtils.XZ(buildingData.m_position));
+                if (num4 <= buildingData.m_position.y)
+                {
+                    Building.Flags flags = buildingData.m_flags;
+                    buildingData.m_fireIntensity = (byte)num2;
+                    info.m_buildingAI.BuildingDeactivated(buildingID, ref buildingData);
+                    Building.Flags flags2 = buildingData.m_flags;
+                    Singleton<BuildingManager>.instance.UpdateBuildingRenderer(buildingID, true);
+                    if (flags2 != flags)
+                    {
+                        Singleton<BuildingManager>.instance.UpdateFlags(buildingID, flags2 ^ flags);                    
+                    }
+                }
+            }
+        }
     }
+
 }
+
