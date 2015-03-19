@@ -13,30 +13,6 @@ namespace DifficultyMod
 {
     public class WBResidentAI : ResidentAI
     {
-        //public static void Initialize(CitizenInfo originalAmbulance, Transform customPrefabs)
-        //{
-        //    if (sm_initialized)
-        //        return;
-        //    VehicleInfo originalAmbulance = collection.m_prefabs.Where(p => p.name == "Ambulance").FirstOrDefault();
-        //    if (originalAmbulance == null)
-        //        throw new KeyNotFoundException("Ambulance was not found on " + collection.name);
-
-        //    GameObject instance = GameObject.Instantiate<GameObject>(originalAmbulance.gameObject);
-        //    instance.name = "Ambulance";
-        //    instance.transform.SetParent(customPrefabs);
-        //    GameObject.Destroy(instance.GetComponent<AmbulanceAI>());
-        //    instance.AddComponent<CustomAmbulanceAI>();
-
-        //    VehicleInfo ambulance = instance.GetComponent<VehicleInfo>();
-        //    ambulance.m_prefabInitialized = false;
-        //    ambulance.m_vehicleAI = null;
-
-        //    MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-        //    Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { ambulance }, new string[] { "Ambulance" } }));
-
-        //    sm_initialized = true;
-        //}
-
         protected override void ArriveAtDestination(ushort instanceID, ref CitizenInstance citizenData, bool success)
         {
             uint citizen = citizenData.m_citizen;
@@ -45,7 +21,7 @@ namespace DifficultyMod
                 CitizenManager instance = Singleton<CitizenManager>.instance;
                 if (success)
                 {
-                    instance.m_citizens.m_buffer[(int)((UIntPtr)citizen)].SetLocationByBuilding(citizen, citizenData.m_targetBuilding);
+                    instance.m_citizens.m_buffer[citizen].SetLocationByBuilding(citizen, citizenData.m_targetBuilding);
                     if (citizenData.m_sourceBuilding != 0 && instance.m_citizens.m_buffer[citizen].CurrentLocation == Citizen.Location.Work)
                     {
                         BuildingManager manager2 = Singleton<BuildingManager>.instance;
@@ -588,7 +564,7 @@ namespace DifficultyMod
                             {
                                 data.CurrentLocation = Citizen.Location.Home;
                             }
-                            else if ((data.m_instance != 0))
+                            else if (data.m_homeBuilding != 0)
                             {
                                 int num2 = Singleton<SimulationManager>.instance.m_randomizer.Int32(80);
                                 if (num2 == 0)
@@ -606,7 +582,7 @@ namespace DifficultyMod
                                     {
                                         numChance = 80;
                                     }
-                                    if (((num2 < numChance) && (data.m_homeBuilding != 0)) && ((data.m_instance == 0) && (data.m_vehicle == 0)))
+                                    if ((num2 < numChance) &&  ((data.m_instance == 0) && (data.m_vehicle == 0)))
                                     {
                                         base.StartMoving(citizenID, ref data, data.m_workBuilding, data.m_homeBuilding);
                                     }

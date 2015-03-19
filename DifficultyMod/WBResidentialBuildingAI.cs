@@ -128,9 +128,37 @@ namespace DifficultyMod
         
         public override string GetLocalizedStatus(ushort buildingID, ref Building data)
         {
-            var result = base.GetLocalizedStatus(buildingID, ref data) + "  Wealth: " + data.m_customBuffer1.ToString();
+            var wealth = data.m_customBuffer1;
+            if (wealth == 0)
+            {
+                wealth = (ushort)(100 + WBLevelUp.GetWealthThreshhold(data.Info.m_class.m_level - 1));
+            }
+            var result = base.GetLocalizedStatus(buildingID, ref data) + "  Wealth: " + wealth.ToString();
             if (data.Info.m_class.m_level != ItemClass.Level.Level5){
                 result += "/" + WBLevelUp.GetWealthThreshhold(data.Info.m_class.m_level);
+            }
+            else
+            {
+            }
+            int landValue;
+            Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(ImmaterialResourceManager.Resource.LandValue, data.m_position, out landValue);
+            result += "  Land Value: " + landValue;
+            if (data.Info.m_class.m_level != ItemClass.Level.Level5)
+            {
+                result += "/" + WBLevelUp.GetLandValueThreshhold(data.Info.m_class.m_level);
+            }
+            else
+            {
+                result += " (Max Level)";
+            }
+
+            if (wealth < WBLevelUp.GetWealthThreshhold(data.Info.m_class.m_level - 1))
+            {
+                result += " Wealth too low for level! (" + WBLevelUp.GetWealthThreshhold(data.Info.m_class.m_level-1) + " min)";
+            }
+            if (landValue < WBLevelUp.GetLandValueThreshhold(data.Info.m_class.m_level - 1))
+            {
+                result += " Land value too low for level! (" + WBLevelUp.GetLandValueThreshhold(data.Info.m_class.m_level - 1) + " min)";
             }
             return result;
         }
@@ -165,7 +193,11 @@ namespace DifficultyMod
                     int num6 = 0;
                     while (num5 != 0)
                     {
-                        if (num5 != buildingID && Singleton<SimulationManager>.instance.m_randomizer.Int32(150u) < damageAccumulation)
+                        var fireChance = 160u;
+#if easyMode
+                        fireChance = 180;
+#endif
+                        if (num5 != buildingID && Singleton<SimulationManager>.instance.m_randomizer.Int32(fireChance) < damageAccumulation)
                         {
                             ExtraTrySpreadFire(quad, vector.y, vector2.y, num5, ref instance.m_buildings.m_buffer[(int)num5]);
                         }

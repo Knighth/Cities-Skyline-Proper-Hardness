@@ -41,6 +41,51 @@ namespace DifficultyMod
                 return 2000;
             }
         }
+
+        public static int GetLandValueThreshhold(ItemClass.Level level)
+        {
+            if (level == ItemClass.Level.None)
+            {
+                return 0;
+            }
+            else if (level == ItemClass.Level.Level1)
+            {
+#if easyMode
+                return 6;
+#else
+                return 15;
+#endif
+            }
+            else if (level == ItemClass.Level.Level2)
+            {
+#if easyMode
+                return 21;
+#else
+                return 35;
+#endif
+            }
+            else if (level == ItemClass.Level.Level3)
+            {
+#if easyMode
+                return 41;
+#else
+                return 60;
+#endif
+            }
+            else if (level == ItemClass.Level.Level4)
+            {
+#if easyMode
+                return 61;
+#else
+                return 85;
+#endif
+            }
+            else
+            {
+                return 2000;
+            }
+        }
+
     public override ResidentialLevelUp OnCalculateResidentialLevelUp(ResidentialLevelUp levelUp, int averageEducation, int landValue, ushort buildingID, Service service, SubService subService, Level currentLevel)
         {
             var instance = Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)buildingID];
@@ -50,22 +95,22 @@ namespace DifficultyMod
             {                
                 Level targetLevel;
 
-                if (landValue < 15 || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level1)))
+                if (landValue < GetLandValueThreshhold(ItemClass.Level.Level1) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level1)))
                 {
                     targetLevel = Level.Level1;
                     levelUp.landValueProgress = 1 + (landValue * 15 + 7) / 15;
                 }
-                else if (landValue < 35 || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level2)))
+                else if (landValue < GetLandValueThreshhold(ItemClass.Level.Level2) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level2)))
                 {
                     targetLevel = Level.Level2;
                     levelUp.landValueProgress = 1 + ((landValue - 15) * 15 + 10) / 20;
                 }
-                else if (landValue < 60 || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level3)))
+                else if (landValue < GetLandValueThreshhold(ItemClass.Level.Level3) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level3)))
                 {
                     targetLevel = Level.Level3;
                     levelUp.landValueProgress = 1 + ((landValue - 35) * 15 + 12) / 25;
                 }
-                else if (landValue < 85 || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level4)))
+                else if (landValue < GetLandValueThreshhold(ItemClass.Level.Level4) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level4)))
                 {
                     targetLevel = Level.Level4;
                     levelUp.landValueProgress = 1 + ((landValue - 60) * 15 + 12) / 25;
@@ -100,21 +145,21 @@ namespace DifficultyMod
             }
             else if (currentLevel == Level.Level3)
             {
-                if (landValue < 21 || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level1)))
+                if (landValue < GetLandValueThreshhold(ItemClass.Level.Level1) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level1)))
                 {
                     levelUp.landValueTooLow = true;
                 }                
             }
             else if (currentLevel == Level.Level4)
             {
-                if (landValue < 46 || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level2)))
+                if (landValue < GetLandValueThreshhold(ItemClass.Level.Level2) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level2)))
                 {
                     levelUp.landValueTooLow = true;
                 }                
             }
             else if (currentLevel == Level.Level5)
             {
-                if (landValue < 70 || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level3)))
+                if (landValue < GetLandValueThreshhold(ItemClass.Level.Level3) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level3)))
                 {
                     levelUp.landValueTooLow = true;
                 }                

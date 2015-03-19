@@ -70,7 +70,9 @@ namespace DifficultyMod
             var mapping = new Dictionary<Type, Type>
             {
                 {typeof (CargoTruckAI), typeof (WBCargoTruckAI)},
+                {typeof (WBCargoTruckAI), typeof (WBCargoTruckAI)},
                 {typeof (PassengerCarAI), typeof (WBPassengerCarAI)},
+                {typeof (WBPassengerCarAI), typeof (WBPassengerCarAI)},
             };
 
 
@@ -82,6 +84,7 @@ namespace DifficultyMod
             mapping = new Dictionary<Type, Type>
             {
                 {typeof (ResidentAI), typeof (WBResidentAI)},
+                {typeof (WBResidentAI), typeof (WBResidentAI)},
             };
 
 
@@ -100,8 +103,11 @@ namespace DifficultyMod
             mapping = new Dictionary<Type, Type>
             {
                 {typeof (ResidentialBuildingAI), typeof (WBResidentialBuildingAI)},
+                {typeof (WBResidentialBuildingAI), typeof (WBResidentialBuildingAI)},
                 {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI)},
+                {typeof (WBCommercialBuildingAI), typeof (WBCommercialBuildingAI)},
                 {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI)},
+                {typeof (WBIndustrialBuildingAI), typeof (WBIndustrialBuildingAI)},
             };
 
             for (uint i = 0; i < PrefabCollection<BuildingInfo>.PrefabCount(); i++)
@@ -144,7 +150,6 @@ namespace DifficultyMod
             //{
             //    return;
             //}
-            DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, bi.name + " " + bi.tag);
             //UnityEngine.Object.Destroy(oldAI,1f);
             CitizenAI newAI = bi.gameObject.AddComponent(newCompType) as CitizenAI;
 
