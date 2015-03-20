@@ -61,11 +61,15 @@ namespace DifficultyMod
 
         //    GameObject.Destroy(m_initializer);
         //}
-
+        GameObject disasters;
+        Disasters dist;
         public override void OnLevelLoaded(LoadMode mode)
         {
             if (mode != LoadMode.LoadGame && mode != LoadMode.NewGame)
                 return;
+
+            disasters = new GameObject("Difficulty Mod");
+            dist = disasters.AddComponent<Disasters>();
 
             var mapping = new Dictionary<Type, Type>
             {
@@ -102,8 +106,8 @@ namespace DifficultyMod
 
             mapping = new Dictionary<Type, Type>
             {
-                {typeof (ResidentialBuildingAI), typeof (WBResidentialBuildingAI)},
-                {typeof (WBResidentialBuildingAI), typeof (WBResidentialBuildingAI)},
+                {typeof (ResidentialBuildingAI), typeof (WBBResidentialBuildingAI)},
+                {typeof (WBBResidentialBuildingAI), typeof (WBBResidentialBuildingAI)},
                 {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI)},
                 {typeof (WBCommercialBuildingAI), typeof (WBCommercialBuildingAI)},
                 {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI)},
@@ -251,5 +255,12 @@ namespace DifficultyMod
                 bf.SetValue(b, kvp.Value);
             }
         }
+
+        public override void OnReleased()
+        {
+            base.OnReleased();
+            GameObject.Destroy(disasters);
+        }
+
     }
 }
