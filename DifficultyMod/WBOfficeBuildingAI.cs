@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 namespace DifficultyMod
 {
-    public class WBIndustrialBuildingAI3 : IndustrialBuildingAI
+    public class WBOfficeBuildingAI5 : OfficeBuildingAI
     {
         private FireSpread fs = new FireSpread();
         protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
@@ -18,6 +18,7 @@ namespace DifficultyMod
                 fs.ExtraFireSpread(buildingID, ref buildingData, 60, this.m_info.m_size.y);
             }
         }
+
         public override float GetEventImpact(ushort buildingID, ref Building data, ImmaterialResourceManager.Resource resource, float amount)
         {
             if ((data.m_flags & (Building.Flags.Abandoned | Building.Flags.BurnedDown)) != Building.Flags.None)
@@ -29,6 +30,7 @@ namespace DifficultyMod
                 case ImmaterialResourceManager.Resource.FireDepartment:
                 case ImmaterialResourceManager.Resource.PoliceDepartment:
                 case ImmaterialResourceManager.Resource.PublicTransport:
+                case ImmaterialResourceManager.Resource.Entertainment:
                     {
                         int num;
                         Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out num);
@@ -44,18 +46,19 @@ namespace DifficultyMod
                         int num18 = ImmaterialResourceManager.CalculateResourceEffect(num16 + Mathf.RoundToInt(amount), 60, 150, 30, 50);
                         return Mathf.Clamp((float)(num18 - num17) / 150, -1f, 1f);
                     }
-                case ImmaterialResourceManager.Resource.CargoTransport:
+                case ImmaterialResourceManager.Resource.NoisePollution:
                     {
                         int num19;
                         Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out num19);
-                        int num20 = ImmaterialResourceManager.CalculateResourceEffect(num19, 20, 50, 30, 50);
-                        int num21 = ImmaterialResourceManager.CalculateResourceEffect(num19 + Mathf.RoundToInt(amount), 20, 50, 30, 50);
+                        int num20 = ImmaterialResourceManager.CalculateResourceEffect(num19, 60, 150, 30, 50);
+                        int num21 = ImmaterialResourceManager.CalculateResourceEffect(num19 + Mathf.RoundToInt(amount), 60, 150, 30, 50);
                         return Mathf.Clamp((float)(num21 - num20) / 50f, -1f, 1f);
                     }
+
             }
             return base.GetEventImpact(buildingID, ref data, resource, amount);
         }
-
+        
         public override string GetLocalizedStatus(ushort buildingID, ref Building data)
         {
             if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.Vanilla)
@@ -63,12 +66,12 @@ namespace DifficultyMod
                 return base.GetLocalizedStatus(buildingID, ref data);
             }
             var result = base.GetLocalizedStatus(buildingID, ref data) + " Service: ";
-            result += WBLevelUp5.GetProperServiceScore(buildingID, false);
-            if (WBLevelUp5.GetServiceIndustryThreshhold(data.Info.m_class.m_level) != int.MaxValue)
-            {
-                result += "/" + WBLevelUp5.GetServiceIndustryThreshhold(data.Info.m_class.m_level);
+            result += WBLevelUp5.GetProperServiceScore(buildingID, true);
+            if (WBLevelUp5.GetServiceOfficeThreshhold(data.Info.m_class.m_level) != int.MaxValue){
+                     result += "/" + WBLevelUp5.GetServiceOfficeThreshhold(data.Info.m_class.m_level);
             }
             return result;
         }
     }
 }
+

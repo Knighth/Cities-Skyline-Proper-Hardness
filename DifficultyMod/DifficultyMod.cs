@@ -13,109 +13,64 @@ namespace DifficultyMod
 {
     public class DifficultyMod : IUserMod
     {
-        public static GameObject modObject;
-
         public string Name
         {
             get
             {
-#if easyMode != true
                 return "Proper Hardness Mod"; 
-#else
-                return "Proper Hardness Mod (Without Hardness)";
-#endif
             }
         }
         public string Description
         {
             get
             {
-#if easyMode != true
-                return "Increased costs, unlock costs (25 tiles), traffic disappear timer, workers need to reach work, and offices spawn more workers."; 
-#else
-                return "Increased traffic disappear timer, workers need to reach work, and offices spawn more workers.";
-#endif
+                return "Increased costs, unlock costs (25 tiles), traffic disappear timer, workers need to reach work, and offices spawn more workers.";
             }
         }
-
-
     }
 
-    public class LoadingExtension : LoadingExtensionBase
+    public class LoadingExtension4 : LoadingExtensionBase
     {
-        //GameObject m_initializer;
-        //public override void OnCreated(ILoading loading)
-        //{
-        //    base.OnCreated(loading);
-
-        //    if (GameObject.Find("Initializer") == null)
-        //    {
-        //        m_initializer = new GameObject("Custom Prefabs");
-        //        m_initializer.AddComponent<Initializer>();
-        //    }
-        //}
-
-        //public override void OnLevelUnloading()
-        //{
-        //    base.OnLevelUnloading();
-
-        //    GameObject.Destroy(m_initializer);
-        //}
-        GameObject disasters;
-        Disasters dist;
+        static GameObject modGameObject;
+        OptionsWindow2 optionsWindow;
         public override void OnLevelLoaded(LoadMode mode)
         {
             if (mode != LoadMode.LoadGame && mode != LoadMode.NewGame)
                 return;
 
-            disasters = new GameObject("Difficulty Mod");
-            dist = disasters.AddComponent<Disasters>();
+            SaveData2.ResetData();
+            modGameObject = new GameObject("Difficulty Mod");
+
+            if (SaveData2.MustInitialize())
+            {
+                var view = UIView.GetAView();
+                this.optionsWindow = modGameObject.AddComponent<OptionsWindow2>();
+                this.optionsWindow.transform.parent = view.transform;
+                this.optionsWindow.mode = mode;
+            }
+            else
+            {
+                LoadMod(mode,SaveData2.saveData);
+            }
+        }
+
+        public static void LoadMod(LoadMode mode, SaveData2 sd)
+        {
+            if (sd.disastersEnabled)
+            {
+                modGameObject.AddComponent<Disasters2>();
+            }
 
             var mapping = new Dictionary<Type, Type>
             {
-                {typeof (CargoTruckAI), typeof (WBCargoTruckAI)},
-                {typeof (WBCargoTruckAI), typeof (WBCargoTruckAI)},
-                {typeof (PassengerCarAI), typeof (WBPassengerCarAI)},
-                {typeof (WBPassengerCarAI), typeof (WBPassengerCarAI)},
-            };
-
-
-            for (uint i = 0; i < PrefabCollection<VehicleInfo>.PrefabCount(); i++)
-            {                
-                var vi = PrefabCollection<VehicleInfo>.GetPrefab(i);
-                AdjustVehicleAI(vi, mapping);
-            }
-            mapping = new Dictionary<Type, Type>
-            {
-                {typeof (ResidentAI), typeof (WBResidentAI)},
-                {typeof (WBResidentAI), typeof (WBResidentAI)},
-            };
-
-
-            for (uint i = 0; i < PrefabCollection<CitizenInfo>.PrefabCount(); i++)
-            {
-                var vi = PrefabCollection<CitizenInfo>.GetPrefab(i);
-                AdjustResidentAI(vi, mapping);
-            }
-
-            //for (uint i = 0; i < PrefabCollection<CitizenInfo>.LoadedCount(); i++)
-            //{
-            //    var vi = PrefabCollection<CitizenInfo>.GetLoaded(i);
-            //    AdjustResidentAI(vi, mapping);
-            //}
-
-            mapping = new Dictionary<Type, Type>
-            {
-                {typeof (ResidentialBuildingAI), typeof (WBBResidentialBuildingAI)},
-                {typeof (WBBResidentialBuildingAI), typeof (WBBResidentialBuildingAI)},
+                {typeof (ResidentialBuildingAI), typeof (WBBResidentialBuildingAI2)},
                 {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI)},
-                {typeof (WBCommercialBuildingAI), typeof (WBCommercialBuildingAI)},
-                {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI)},
-                {typeof (WBIndustrialBuildingAI), typeof (WBIndustrialBuildingAI)},
+                {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI3)},
+                {typeof (OfficeBuildingAI), typeof (WBOfficeBuildingAI5)},
             };
 
             for (uint i = 0; i < PrefabCollection<BuildingInfo>.PrefabCount(); i++)
-            {            
+            {
                 var vi = PrefabCollection<BuildingInfo>.GetPrefab(i);
                 AdjustBuildingAI(vi, mapping);
             }
@@ -125,17 +80,45 @@ namespace DifficultyMod
                 var vi = PrefabCollection<BuildingInfo>.GetLoaded(i);
                 AdjustBuildingAI(vi, mapping);
             }
-            
-#if easyMode != true
-                if (mode == LoadMode.NewGame)
-                {
-                    Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.LoanAmount, 3000000, ItemClass.Service.Education, ItemClass.SubService.None, ItemClass.Level.None);
-                }
-#endif
-            DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Loaded proper hardness.");
+
+            if (sd.DifficultyLevel == DifficultyLevel.Vanilla)
+            {
+                return;
+            }
+
+
+            if (sd.DifficultyLevel == DifficultyLevel.Hard && mode == LoadMode.NewGame)
+            {
+                Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.LoanAmount, 3000000, ItemClass.Service.Education, ItemClass.SubService.None, ItemClass.Level.None);
+            }
+
+            mapping = new Dictionary<Type, Type>
+            {
+                {typeof (CargoTruckAI), typeof (WBCargoTruckAI)},
+                {typeof (PassengerCarAI), typeof (WBPassengerCarAI)},
+            };
+
+            for (uint i = 0; i < PrefabCollection<VehicleInfo>.PrefabCount(); i++)
+            {
+                var vi = PrefabCollection<VehicleInfo>.GetPrefab(i);
+                AdjustVehicleAI(vi, mapping);
+            }
+            mapping = new Dictionary<Type, Type>
+            {
+                {typeof (ResidentAI), typeof (WBResidentAI4)},
+            };
+
+
+            for (uint i = 0; i < PrefabCollection<CitizenInfo>.PrefabCount(); i++)
+            {
+                var vi = PrefabCollection<CitizenInfo>.GetPrefab(i);
+                AdjustResidentAI(vi, mapping);
+            }
+            Singleton<UnlockManager>.instance.MilestonesUpdated();
+            DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Loaded proper hardness. " + sd.DifficultyLevel.ToString());
         }
 
-        private void AdjustResidentAI(CitizenInfo bi, Dictionary<Type, Type> componentRemap)
+        private static void AdjustResidentAI(CitizenInfo bi, Dictionary<Type, Type> componentRemap)
         {
             if (bi == null)
             {
@@ -150,10 +133,6 @@ namespace DifficultyMod
             if (!componentRemap.TryGetValue(compType, out newCompType))
                 return;
 
-            //if (bi.name.Contains("Child") || bi.name.Contains("Pensioner"))
-            //{
-            //    return;
-            //}
             //UnityEngine.Object.Destroy(oldAI,1f);
             CitizenAI newAI = bi.gameObject.AddComponent(newCompType) as CitizenAI;
 
@@ -166,7 +145,7 @@ namespace DifficultyMod
             }
         }
 
-        private void AdjustBuildingAI(BuildingInfo bi, Dictionary<Type, Type> componentRemap)
+        private static void AdjustBuildingAI(BuildingInfo bi, Dictionary<Type, Type> componentRemap)
         {
             if (bi == null)
             {
@@ -197,7 +176,7 @@ namespace DifficultyMod
 
         }
 
-        private void AdjustVehicleAI(VehicleInfo vi, Dictionary<Type, Type> componentRemap)
+        private static void AdjustVehicleAI(VehicleInfo vi, Dictionary<Type, Type> componentRemap)
         {
             if (vi == null)
             {
@@ -228,7 +207,7 @@ namespace DifficultyMod
 
         }
 
-        private Dictionary<string, object> ExtractFields(object a)
+        private static Dictionary<string, object> ExtractFields(object a)
         {
             var fields = a.GetType().GetFields();
             var dict = new Dictionary<string, object>(fields.Length);
@@ -240,12 +219,11 @@ namespace DifficultyMod
             return dict;
         }
 
-        private void SetFields(object b, Dictionary<string, object> fieldValues)
+        private static void SetFields(object b, Dictionary<string, object> fieldValues)
         {
             var bType = b.GetType();
             foreach (var kvp in fieldValues)
             {
-                // .AddMessage(PluginManager.MessageType.Message, "setting Field: " + kvp.Key + " " + kvp.Value);
                 var bf = bType.GetField(kvp.Key);
                 if (bf == null)
                 {
@@ -259,7 +237,7 @@ namespace DifficultyMod
         public override void OnReleased()
         {
             base.OnReleased();
-            GameObject.Destroy(disasters);
+            GameObject.Destroy(modGameObject);
         }
 
     }

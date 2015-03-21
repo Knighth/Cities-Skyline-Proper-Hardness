@@ -10,12 +10,13 @@ namespace DifficultyMod
 {
     public class WBCommercialBuildingAI : CommercialBuildingAI
     {
+        private FireSpread fs = new FireSpread();
         protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
         {
             base.SimulationStepActive(buildingID, ref buildingData, ref frameData);
-            if (buildingData.m_fireIntensity != 0 && frameData.m_fireDamage > 12)
+            if (buildingData.m_fireIntensity != 0 && frameData.m_fireDamage > 12 && SaveData2.saveData.disastersEnabled)
             {
-                WBBResidentialBuildingAI.ExtraFireSpread(buildingID, ref buildingData, 50, this.m_info.m_size.y);
+                fs.ExtraFireSpread(buildingID, ref buildingData, 50, this.m_info.m_size.y);
             }
         }
     }

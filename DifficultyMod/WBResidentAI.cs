@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 namespace DifficultyMod
 {
-    public class WBResidentAI : ResidentAI
+    public class WBResidentAI4 : ResidentAI
     {
         protected override void ArriveAtDestination(ushort instanceID, ref CitizenInstance citizenData, bool success)
         {
@@ -38,6 +38,7 @@ namespace DifficultyMod
                     }
                 }
             }
+
             base.ArriveAtDestination(instanceID, ref citizenData, success);
         }
 
@@ -1223,6 +1224,54 @@ namespace DifficultyMod
                 }
             }
         }
+
+        protected override bool StartPathFind(ushort instanceID, ref CitizenInstance citizenData)
+        {
+            if (citizenData.m_citizen != 0u)
+            {
+                CitizenManager instance = Singleton<CitizenManager>.instance;
+                VehicleManager instance2 = Singleton<VehicleManager>.instance;
+                ushort vehicle = instance.m_citizens.m_buffer[(int)((UIntPtr)citizenData.m_citizen)].m_vehicle;
+                if (vehicle != 0)
+                {
+                    VehicleInfo info = instance2.m_vehicles.m_buffer[(int)vehicle].Info;
+                    uint citizen = info.m_vehicleAI.GetOwnerID(vehicle, ref instance2.m_vehicles.m_buffer[(int)vehicle]).Citizen;
+                    if (citizen == citizenData.m_citizen)
+                    {
+                        info.m_vehicleAI.SetTarget(vehicle, ref instance2.m_vehicles.m_buffer[(int)vehicle], 0);
+                    }
+                    else
+                    {
+                        instance.m_citizens.m_buffer[(int)((UIntPtr)citizenData.m_citizen)].SetVehicle(citizenData.m_citizen, 0, 0u);
+                    }
+                    return false;
+                }
+            }
+            if (citizenData.m_targetBuilding != 0)
+            {
+                VehicleInfo vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, false);
+                BuildingManager instance3 = Singleton<BuildingManager>.instance;
+                BuildingInfo info2 = instance3.m_buildings.m_buffer[(int)citizenData.m_targetBuilding].Info;
+                Randomizer randomizer = new Randomizer((int)instanceID << 8 | (int)citizenData.m_targetSeed);
+                Vector3 vector;
+                Vector3 endPos;
+                Vector2 vector2;
+                CitizenInstance.Flags flags;
+                info2.m_buildingAI.CalculateUnspawnPosition(citizenData.m_targetBuilding, ref instance3.m_buildings.m_buffer[(int)citizenData.m_targetBuilding], ref randomizer, this.m_info, instanceID, out vector, out endPos, out vector2, out flags);
+                if (!base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo) && vehicleInfo == null)
+                {
+                    vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, true);                    
+                    var result = base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo);
+                    return result;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
 
     }
 

@@ -11,8 +11,47 @@ using UnityEngine;
 
 namespace DifficultyMod
 {
-    public class WBLevelUp : LevelUpExtensionBase
+    public class WBLevelUp5 : LevelUpExtensionBase
     {
+        public static int GetServiceOfficeThreshhold(ItemClass.Level level)
+        {
+            if (level == ItemClass.Level.None)
+            {
+                return 0;
+            }
+            else if (level == ItemClass.Level.Level1)
+            {
+                return 40;
+            }
+            else if (level == ItemClass.Level.Level2)
+            {
+                return 94;
+            }
+            else
+            {
+                return int.MaxValue;
+            }
+        }
+
+        public static int GetServiceIndustryThreshhold(ItemClass.Level level)
+        {
+            if (level == ItemClass.Level.None)
+            {
+                return 0;
+            }
+            else if (level == ItemClass.Level.Level1)
+            {
+                return 40;
+            }
+            else if (level == ItemClass.Level.Level2)
+            {
+                return 90;
+            }
+            else
+            {
+                return int.MaxValue;
+            }
+        }
 
         public static int GetWealthThreshhold(ItemClass.Level level)
         {
@@ -38,87 +77,86 @@ namespace DifficultyMod
             }
             else
             {
-                return 2000;
+                return int.MaxValue;
             }
         }
 
         public static int GetLandValueThreshhold(ItemClass.Level level)
         {
+            var sd = SaveData2.saveData;
             if (level == ItemClass.Level.None)
             {
                 return 0;
             }
             else if (level == ItemClass.Level.Level1)
             {
-#if easyMode
-                return 6;
-#else
-                return 15;
-#endif
+                if (sd.DifficultyLevel == DifficultyLevel.Normal){    
+                                return 6;
+                }
+                else {    
+                                return 15;
+                }
             }
             else if (level == ItemClass.Level.Level2)
             {
-#if easyMode
-                return 21;
-#else
-                return 35;
-#endif
+                if (sd.DifficultyLevel == DifficultyLevel.Normal)
+                {
+                    return 21;
+                }
+                else
+                {
+                    return 35;
+                }
             }
             else if (level == ItemClass.Level.Level3)
             {
-#if easyMode
-                return 41;
-#else
-                return 60;
-#endif
+                if (sd.DifficultyLevel == DifficultyLevel.Normal)
+                {
+                    return 41;
+                }
+                else
+                {
+                    return 60;
+                }
             }
             else if (level == ItemClass.Level.Level4)
             {
-#if easyMode
-                return 61;
-#else
-                return 85;
-#endif
+                if (sd.DifficultyLevel == DifficultyLevel.Normal)
+                {
+                    return 61;
+                }
+                else
+                {
+                    return 80;
+                }
             }
             else
             {
-                return 2000;
+                return int.MaxValue;
             }
         }
 
     public override ResidentialLevelUp OnCalculateResidentialLevelUp(ResidentialLevelUp levelUp, int averageEducation, int landValue, ushort buildingID, Service service, SubService subService, Level currentLevel)
         {
+            if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.Vanilla)
+            {
+                return levelUp;
+            }
+
             var instance = Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)buildingID];
             int buildingWealth = instance.m_customBuffer1;
 
             if (levelUp.landValueProgress != 0)
             {                
-                Level targetLevel;
-
-                if (landValue < GetLandValueThreshhold(ItemClass.Level.Level1) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level1)))
+                Level targetLevel = Level.Level5;
+                for (var i = 0; i < 5; i += 1)
                 {
-                    targetLevel = Level.Level1;
-                    levelUp.landValueProgress = 1 + (landValue * 15 + 7) / 15;
-                }
-                else if (landValue < GetLandValueThreshhold(ItemClass.Level.Level2) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level2)))
-                {
-                    targetLevel = Level.Level2;
-                    levelUp.landValueProgress = 1 + ((landValue - 15) * 15 + 10) / 20;
-                }
-                else if (landValue < GetLandValueThreshhold(ItemClass.Level.Level3) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level3)))
-                {
-                    targetLevel = Level.Level3;
-                    levelUp.landValueProgress = 1 + ((landValue - 35) * 15 + 12) / 25;
-                }
-                else if (landValue < GetLandValueThreshhold(ItemClass.Level.Level4) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold(ItemClass.Level.Level4)))
-                {
-                    targetLevel = Level.Level4;
-                    levelUp.landValueProgress = 1 + ((landValue - 60) * 15 + 12) / 25;
-                }
-                else
-                {
-                    targetLevel = Level.Level5;
-                    levelUp.landValueProgress = 1;
+                    if (landValue < GetLandValueThreshhold((ItemClass.Level)i) || (buildingWealth != 0 && buildingWealth < GetWealthThreshhold((ItemClass.Level)i)))
+                    {
+                        targetLevel = (Level)i;
+                        levelUp.landValueProgress = CalcProgress(landValue, GetLandValueThreshhold((ItemClass.Level)i), GetLandValueThreshhold((ItemClass.Level)(i - 1)), 8) + CalcProgress(buildingWealth, GetWealthThreshhold((ItemClass.Level)i), GetWealthThreshhold((ItemClass.Level)(i-1)), 8);
+                        break;
+                    }
                 }
 
                 if (targetLevel < currentLevel)
@@ -168,9 +206,18 @@ namespace DifficultyMod
             return levelUp;
         }
 
-#if easyMode != true
+    private int CalcProgress(int val, int max,int previous, int multiplier)
+    {
+        return Math.Max(0,Math.Min(val - previous, max)) * multiplier / max;
+    }
+
         public override CommercialLevelUp OnCalculateCommercialLevelUp(CommercialLevelUp levelUp, int averageWealth, int landValue, ushort buildingID, Service service, SubService subService, Level currentLevel)
         {
+            if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.Vanilla)
+            {
+                return levelUp;
+            }
+
             if (levelUp.landValueProgress != 0)
             {
                 Level targetLevel;
@@ -180,7 +227,7 @@ namespace DifficultyMod
                     targetLevel = Level.Level1;
                     levelUp.landValueProgress = 1 + (landValue * 15 + 15) / 30;
                 }
-                else if (landValue < 60)
+                else if (landValue < 80)
                 {
                     targetLevel = Level.Level2;
                     levelUp.landValueProgress = 1 + ((landValue - 30) * 15 + 15) / 30;
@@ -218,15 +265,123 @@ namespace DifficultyMod
 
             return levelUp;
         }
-#endif
+
+        public override OfficeLevelUp OnCalculateOfficeLevelUp(OfficeLevelUp levelUp, int averageEducation, int serviceScore, ushort buildingID, Service service, SubService subService, Level currentLevel)
+        {
+            if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.Vanilla)
+            {
+                return levelUp;
+            }
+
+            serviceScore = GetProperServiceScore(buildingID,true);
+            Level targetLevel = Level.Level3;
+            
+            for (var i = 0; i < 3; i += 1)
+            {
+                if (serviceScore < GetServiceOfficeThreshhold((ItemClass.Level)i) )
+                {
+                    targetLevel = (Level)i;
+                    levelUp.serviceProgress = 1 + CalcProgress(serviceScore, GetServiceOfficeThreshhold((ItemClass.Level)i), GetServiceOfficeThreshhold((ItemClass.Level)(i - 1)), 15);
+                    break;
+                }                
+            }
+
+            levelUp.tooFewServices = (serviceScore < GetServiceOfficeThreshhold((ItemClass.Level)(Math.Max(-1,(int)currentLevel - 2))));
+
+            if (targetLevel < currentLevel)
+            {
+                levelUp.serviceProgress = 1;
+            }
+            else if (targetLevel > currentLevel)
+            {
+                levelUp.serviceProgress = 15;
+            }
+            if (targetLevel < levelUp.targetLevel)
+            {
+                levelUp.targetLevel = targetLevel;
+            }
+            return levelUp;
+        }
+
+        public override IndustrialLevelUp OnCalculateIndustrialLevelUp(IndustrialLevelUp levelUp, int averageEducation, int serviceScore, ushort buildingID, Service service, SubService subService, Level currentLevel)
+        {
+            if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.Vanilla)
+            {
+                return levelUp;
+            }
+
+            serviceScore = GetProperServiceScore(buildingID,false);
+            Level targetLevel = Level.Level3;
+
+            for (var i = 0; i < 3; i += 1)
+            {
+                if (serviceScore < GetServiceIndustryThreshhold((ItemClass.Level)i) )
+                {
+                    targetLevel = (Level)i;
+                    levelUp.serviceProgress = 1 + CalcProgress(serviceScore, GetServiceIndustryThreshhold((ItemClass.Level)i), GetServiceIndustryThreshhold((ItemClass.Level)(i - 1)), 15);
+                    break;
+                }
+            }
+            
+            levelUp.tooFewServices = (serviceScore < GetServiceIndustryThreshhold((ItemClass.Level)(Math.Max(-1,(int)currentLevel - 2))));
+
+            if (targetLevel < currentLevel)
+            {
+                levelUp.serviceProgress = 1;
+            }
+            else if (targetLevel > currentLevel)
+            {
+                levelUp.serviceProgress = 15;
+            }
+            if (targetLevel < levelUp.targetLevel)
+            {
+                levelUp.targetLevel = targetLevel;
+            }
+            return levelUp;
+        }
+
+        public static int GetProperServiceScore(ushort buildingID, bool isOffice)
+        {
+            Building data = Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)buildingID];
+            ushort[] array;
+            int num;
+            Singleton<ImmaterialResourceManager>.instance.CheckLocalResources(data.m_position, out array, out num);
+            double num2 = 0;
+            num2 += ImmaterialResourceManager.CalculateResourceEffect(array[num + (int)ImmaterialResourceManager.Resource.FireDepartment], 60, 150, 30, 50) / 2.0;
+            num2 += ImmaterialResourceManager.CalculateResourceEffect(array[num + (int)ImmaterialResourceManager.Resource.PoliceDepartment], 60, 150, 30, 50) / 2.0;
+            num2 += ImmaterialResourceManager.CalculateResourceEffect(array[num + (int)ImmaterialResourceManager.Resource.PublicTransport], 60, 150, 30, 50) / 2.0;
+            num2 += ImmaterialResourceManager.CalculateResourceEffect(array[num + (int)ImmaterialResourceManager.Resource.LandValue], 60, 150, 30, 50) / 4.0;
+            num2 -= ImmaterialResourceManager.CalculateResourceEffect(array[num + (int)ImmaterialResourceManager.Resource.Abandonment], 60, 150, 30, 50) / 2.0;
+
+            if (isOffice)
+            {
+                byte resourceRate13;
+                Singleton<NaturalResourceManager>.instance.CheckPollution(data.m_position, out resourceRate13);
+                num2 -= ImmaterialResourceManager.CalculateResourceEffect((int)resourceRate13, 50, 255, 50, 100) / 4.0;
+                num2 += ImmaterialResourceManager.CalculateResourceEffect(array[num + (int)ImmaterialResourceManager.Resource.Entertainment], 60, 150, 30, 50) / 3.0;
+                num2 -= ImmaterialResourceManager.CalculateResourceEffect(array[num + (int)ImmaterialResourceManager.Resource.NoisePollution], 60, 150, 30, 50) / 3.0;
+
+            }
+            else
+            {
+                num2 += ImmaterialResourceManager.CalculateResourceEffect(array[num + (int)ImmaterialResourceManager.Resource.CargoTransport], 20, 50, 30, 50) / 4.0;
+                num2 += ImmaterialResourceManager.CalculateResourceEffect(array[num + (int)ImmaterialResourceManager.Resource.Entertainment], 60, 150, 30, 50) / 5.0;
+            }
+            return (int)num2;
+        }
+
     }
-#if easyMode != true
     
     public class HardModeEconomy : EconomyExtensionBase
     {
 
         public override int OnGetConstructionCost(int originalConstructionCost, Service service, SubService subService, Level level)
         {
+            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            {
+                return originalConstructionCost;
+            }
+
             var multiplier = 1.4;
             if (originalConstructionCost > 30000000)
             {
@@ -256,11 +411,11 @@ namespace DifficultyMod
                     case Service.Road:
                         if (originalConstructionCost >= 7000)
                         {
-                            multiplier = 6;
+                            multiplier = 5;
                         }
                         else
                         {
-                            multiplier = 3;
+                            multiplier = 2.5;
                         }
                         break;
                 }
@@ -270,7 +425,12 @@ namespace DifficultyMod
 
         public override int OnGetMaintenanceCost(int originalMaintenanceCost, Service service, SubService subService, Level level)
         {
-            var multiplier = 1.4;
+            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            {
+                return originalMaintenanceCost;
+            }
+
+            var multiplier = 1.6;
 
             switch (service)
             {
@@ -278,7 +438,10 @@ namespace DifficultyMod
                     multiplier = 2.0;
                     break;
                 case Service.Road:
-                    multiplier = 1.8;
+                    multiplier = 2.0;
+                    break;
+                case Service.Garbage:
+                    multiplier = 1;
                 break;
             }
             return (int)(originalMaintenanceCost * multiplier);
@@ -286,6 +449,10 @@ namespace DifficultyMod
 
         public override int OnGetRelocationCost(int constructionCost, int relocationCost, Service service, SubService subService, Level level)
         {
+            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            {
+                return constructionCost;
+            }
             return constructionCost / 2;
         }
 
@@ -304,6 +471,11 @@ namespace DifficultyMod
     {
         public override int OnAddResource(EconomyResource resource, int amount, Service service, SubService subService, Level level)
         {
+            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            {
+                return amount;
+            }
+
             if (resource == EconomyResource.RewardAmount)
             {
                 return amount/4;
@@ -331,6 +503,10 @@ namespace DifficultyMod
 
         public int OnGetAreaPrice(uint ore, uint oil, uint forest, uint fertility, uint water, bool road, bool train, bool ship, bool plane, float landFlatness, int originalPrice)
         {
+            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            {
+                return originalPrice;
+            }
             return (int)Math.Min(int.MaxValue,Math.Round(Math.Pow(originalPrice * 2.0,1.2),3));
         }
 
@@ -339,6 +515,5 @@ namespace DifficultyMod
 
         }
     }
-#endif
 
 }
