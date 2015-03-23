@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 namespace DifficultyMod
 {
-    public class WBResidentAI4 : ResidentAI
+    public class WBResidentAI6 : ResidentAI
     {
         protected override void ArriveAtDestination(ushort instanceID, ref CitizenInstance citizenData, bool success)
         {
@@ -19,9 +19,11 @@ namespace DifficultyMod
             if (citizen != 0)
             {
                 CitizenManager instance = Singleton<CitizenManager>.instance;
-                if (success)
+                var citizenInstance = instance.m_citizens.m_buffer[citizen];
+                var ageGroup = Citizen.GetAgeGroup(citizenInstance.m_age);
+                if (success && (ageGroup == Citizen.AgeGroup.Adult || ageGroup == Citizen.AgeGroup.Young))
                 {
-                    instance.m_citizens.m_buffer[citizen].SetLocationByBuilding(citizen, citizenData.m_targetBuilding);
+                    citizenInstance.SetLocationByBuilding(citizen, citizenData.m_targetBuilding);
                     if (citizenData.m_sourceBuilding != 0 && instance.m_citizens.m_buffer[citizen].CurrentLocation == Citizen.Location.Work)
                     {
                         BuildingManager manager2 = Singleton<BuildingManager>.instance;
@@ -519,7 +521,8 @@ namespace DifficultyMod
                                     }
                                     if ((((num < numChance) && (data.m_homeBuilding != 0)) && (data.m_instance == 0)) && (data.m_vehicle == 0))
                                     {
-                                        if (base.StartMoving(citizenID, ref data, data.m_homeBuilding, data.m_workBuilding))
+                                        var ageGroup = Citizen.GetAgeGroup(data.m_age);                                        
+                                        if ((ageGroup == Citizen.AgeGroup.Adult || ageGroup == Citizen.AgeGroup.Young) && base.StartMoving(citizenID, ref data, data.m_homeBuilding, data.m_workBuilding))
                                         {
                                             BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
                                             int amountDelta = -50;
@@ -806,10 +809,14 @@ namespace DifficultyMod
                 case TransferManager.TransferReason.ShoppingH:
                     if (data.m_homeBuilding != 0 && !data.Sick && base.StartMoving(citizenID, ref data, 0, offer.Building))
                     {
-                        BuildingManager instance = Singleton<BuildingManager>.instance;
-                        BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
-                        int amountDelta = -50;
-                        instance.m_buildings.m_buffer[data.m_homeBuilding].Info.m_buildingAI.ModifyMaterialBuffer(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
+                         var ageGroup = Citizen.GetAgeGroup(data.m_age);
+                         if ((ageGroup == Citizen.AgeGroup.Adult || ageGroup == Citizen.AgeGroup.Young))
+                         {
+                             BuildingManager instance = Singleton<BuildingManager>.instance;
+                             BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
+                             int amountDelta = -50;
+                             instance.m_buildings.m_buffer[data.m_homeBuilding].Info.m_buildingAI.ModifyMaterialBuffer(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
+                         }
 
                         data.SetVisitplace(citizenID, offer.Building, 0u);
                         CitizenManager instance3 = Singleton<CitizenManager>.instance;
@@ -1249,7 +1256,7 @@ namespace DifficultyMod
             }
             if (citizenData.m_targetBuilding != 0)
             {
-                VehicleInfo vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, false);
+                VehicleInfo vehicleInfo = this.GetVehicleInfo(instanceID, ref citizenData, false);
                 BuildingManager instance3 = Singleton<BuildingManager>.instance;
                 BuildingInfo info2 = instance3.m_buildings.m_buffer[(int)citizenData.m_targetBuilding].Info;
                 Randomizer randomizer = new Randomizer((int)instanceID << 8 | (int)citizenData.m_targetSeed);
@@ -1260,7 +1267,7 @@ namespace DifficultyMod
                 info2.m_buildingAI.CalculateUnspawnPosition(citizenData.m_targetBuilding, ref instance3.m_buildings.m_buffer[(int)citizenData.m_targetBuilding], ref randomizer, this.m_info, instanceID, out vector, out endPos, out vector2, out flags);
                 if (!base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo) && vehicleInfo == null)
                 {
-                    vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, true);                    
+                    vehicleInfo = this.GetVehicleInfo(instanceID, ref citizenData, true);
                     var result = base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo);
                     return result;
                 }
@@ -1270,6 +1277,50 @@ namespace DifficultyMod
                 }
             }
             return false;
+        }
+
+        protected override VehicleInfo GetVehicleInfo(ushort instanceID, ref CitizenInstance citizenData, bool forceProbability)
+        {
+            if (citizenData.m_citizen == 0u)
+            {
+                return null;
+            }
+            int age = Singleton<CitizenManager>.instance.m_citizens.m_buffer[(int)citizenData.m_citizen].Age;
+            int num;
+            if (forceProbability || (citizenData.m_flags & CitizenInstance.Flags.BorrowCar) != CitizenInstance.Flags.None)
+            {
+                num = 100;
+            }
+            else
+            {
+                num = this.GetCarProbability(Citizen.GetAgeGroup(age));
+            }
+
+            Randomizer randomizer = new Randomizer(citizenData.m_citizen);
+            if (randomizer.Int32(100u) < num)
+            {
+                return Singleton<VehicleManager>.instance.GetRandomVehicleInfo(ref randomizer, ItemClass.Service.Residential, ItemClass.SubService.ResidentialLow, ItemClass.Level.Level1);
+            }
+            return null;
+        }
+
+        private int GetCarProbability(Citizen.AgeGroup ageGroup)
+        {
+            switch (ageGroup)
+            {
+                case Citizen.AgeGroup.Child:
+                    return 0;
+                case Citizen.AgeGroup.Teen:
+                    return 5;
+                case Citizen.AgeGroup.Young:
+                    return 20;
+                case Citizen.AgeGroup.Adult:
+                    return 25;
+                case Citizen.AgeGroup.Senior:
+                    return 5;
+                default:
+                    return 0;
+            }
         }
 
 

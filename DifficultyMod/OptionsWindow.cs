@@ -149,21 +149,20 @@ namespace DifficultyMod
             var data = SaveData2.saveData;
             data.cityId = Singleton<SimulationManager>.instance.m_metaData.m_gameInstanceIdentifier;
             data.DifficultyLevel = (DifficultyLevel)difficultySelect.selectedIndex;
-            data.disastersEnabled = disastersCheck;
+            data.disastersEnabled = disastersCheck.IsChecked;
             SaveData2.WriteData(data);
             this.Hide();
-            LoadingExtension4.LoadMod(this.mode,data);
+            LoadingExtension56.LoadMod(this.mode,data);
         }
 
     }
-
     public class UICustomCheckbox : UISprite
     {
         public bool IsChecked { get; set; }
 
-        public override void Start()
+        public override void Awake()
         {
-            base.Start();
+            base.Awake();
             IsChecked = true;
             spriteName = "AchievementCheckedTrue";
         }
@@ -173,7 +172,5 @@ namespace DifficultyMod
             base.Update();
             spriteName = IsChecked ? "AchievementCheckedTrue" : "AchievementCheckedFalse";
         }
-
     }
-
 }

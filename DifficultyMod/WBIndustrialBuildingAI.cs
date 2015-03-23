@@ -7,12 +7,21 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 namespace DifficultyMod
 {
-    public class WBIndustrialBuildingAI3 : IndustrialBuildingAI
+    public class WBIndustrialBuildingAI6 : IndustrialBuildingAI
     {
         private FireSpread fs = new FireSpread();
         protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
         {
+            if (Singleton<SimulationManager>.instance.m_randomizer.Int32(12u) == 0)
+            {
+                int num16;
+                int num17;
+                this.GetPollutionRates(10, out num16, out num17);
+                Singleton<NaturalResourceManager>.instance.TryDumpResource(NaturalResourceManager.Resource.Pollution, num16, num16, buildingData.m_position, 250f);
+            }
+
             base.SimulationStepActive(buildingID, ref buildingData, ref frameData);
+
             if (buildingData.m_fireIntensity != 0 && frameData.m_fireDamage > 12 && SaveData2.saveData.disastersEnabled)
             {
                 fs.ExtraFireSpread(buildingID, ref buildingData, 60, this.m_info.m_size.y);
@@ -54,21 +63,6 @@ namespace DifficultyMod
                     }
             }
             return base.GetEventImpact(buildingID, ref data, resource, amount);
-        }
-
-        public override string GetLocalizedStatus(ushort buildingID, ref Building data)
-        {
-            if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.Vanilla)
-            {
-                return base.GetLocalizedStatus(buildingID, ref data);
-            }
-            var result = base.GetLocalizedStatus(buildingID, ref data) + " Service: ";
-            result += WBLevelUp5.GetProperServiceScore(buildingID, false);
-            if (WBLevelUp5.GetServiceIndustryThreshhold(data.Info.m_class.m_level) != int.MaxValue)
-            {
-                result += "/" + WBLevelUp5.GetServiceIndustryThreshhold(data.Info.m_class.m_level);
-            }
-            return result;
         }
     }
 }

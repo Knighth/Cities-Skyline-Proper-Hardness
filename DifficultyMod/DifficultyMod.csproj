@@ -54,8 +54,10 @@
     <Compile Include="FireSpread.cs" />
     <Compile Include="Disasters.cs" />
     <Compile Include="ModdingAPI.cs" />
+    <Compile Include="BuildingInfoWindow.cs" />
     <Compile Include="OptionsWindow.cs" />
     <Compile Include="SaveData.cs" />
+    <Compile Include="TransportLineAI.cs" />
     <Compile Include="WBOfficeBuildingAI.cs" />
     <Compile Include="WBResidentAI.cs" />
     <Compile Include="WBIndustrialBuildingAI.cs" />

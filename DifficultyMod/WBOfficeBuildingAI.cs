@@ -59,19 +59,6 @@ namespace DifficultyMod
             return base.GetEventImpact(buildingID, ref data, resource, amount);
         }
         
-        public override string GetLocalizedStatus(ushort buildingID, ref Building data)
-        {
-            if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.Vanilla)
-            {
-                return base.GetLocalizedStatus(buildingID, ref data);
-            }
-            var result = base.GetLocalizedStatus(buildingID, ref data) + " Service: ";
-            result += WBLevelUp5.GetProperServiceScore(buildingID, true);
-            if (WBLevelUp5.GetServiceOfficeThreshhold(data.Info.m_class.m_level) != int.MaxValue){
-                     result += "/" + WBLevelUp5.GetServiceOfficeThreshhold(data.Info.m_class.m_level);
-            }
-            return result;
-        }
     }
 }
 
