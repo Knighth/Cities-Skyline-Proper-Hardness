@@ -94,6 +94,7 @@ namespace DifficultyMod
             selButton.text = "";
             selButton.size = new Vector2(100, 30);
             selButton.relativePosition = new Vector3(x + 100, y);
+
             difficultyLabel.relativePosition = new Vector3(x, y);
             difficultyLabel.text = "Difficulty";
             difficultyLabel.textScale = 0.8f;

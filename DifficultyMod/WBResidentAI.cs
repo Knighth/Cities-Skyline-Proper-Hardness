@@ -11,10 +11,11 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 namespace DifficultyMod
 {
-    public class WBResidentAI4 : ResidentAI
+    public class WBResidentAI6 : ResidentAI
     {
         private static byte[] commuteHappinness = new byte[1048576];
         private static byte[] commuteWait = new byte[1048576];
+
         public static byte GetCommute(uint p)
         {
             return commuteHappinness[p];
@@ -49,6 +50,12 @@ namespace DifficultyMod
                 }
             }
 
+        }
+
+        private void ReleaseCitizen(uint citizenID)
+        {
+            commuteHappinness[citizenID] = 0;
+            Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
         }
 
         protected override void ArriveAtDestination(ushort instanceID, ref CitizenInstance citizenData, bool success)
@@ -89,6 +96,7 @@ namespace DifficultyMod
             BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
             int amountDelta = -50;
             instance.m_buildings.m_buffer[data.m_homeBuilding].Info.m_buildingAI.ModifyMaterialBuffer(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
+            commuteWait[citizen] = 1;
         }
 
         public override void SimulationStep(uint citizenID, ref Citizen data)
@@ -123,6 +131,10 @@ namespace DifficultyMod
                 {
                     citizenData.m_waitCounter = (byte)(citizenData.m_waitCounter - 1);
                 }
+                else
+                {
+                    AddCommuteWait(citizenData.m_citizen, 1);    
+                }
             }
         }
 
@@ -134,7 +146,7 @@ namespace DifficultyMod
                 {
                     return true;
                 }
-                Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+               ReleaseCitizen(citizenID);
                 return false;
             }
             if (Singleton<UnlockManager>.instance.Unlocked(ItemClass.Service.HealthCare))
@@ -150,7 +162,7 @@ namespace DifficultyMod
                 Singleton<TransferManager>.instance.AddOutgoingOffer(reason, offer);
                 return true;
             }
-            Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+           ReleaseCitizen(citizenID);
             return false;
         }
 
@@ -258,7 +270,7 @@ namespace DifficultyMod
                 this.Die(citizenID, ref data);
                 if (Singleton<SimulationManager>.instance.m_randomizer.Int32(2) == 0)
                 {
-                    Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+                   ReleaseCitizen(citizenID);
                     return true;
                 }
             }
@@ -419,7 +431,7 @@ namespace DifficultyMod
                         this.Die(citizenID, ref data);
                         if (Singleton<SimulationManager>.instance.m_randomizer.Int32(2) == 0)
                         {
-                            Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+                           ReleaseCitizen(citizenID);
                             return true;
                         }
                     }
@@ -502,7 +514,7 @@ namespace DifficultyMod
         {
             if ((((data.m_homeBuilding == 0) && (data.m_workBuilding == 0)) && ((data.m_visitBuilding == 0) && (data.m_instance == 0))) && (data.m_vehicle == 0))
             {
-                Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+               ReleaseCitizen(citizenID);
             }
             else
             {
@@ -515,7 +527,7 @@ namespace DifficultyMod
                             {
                                 if (data.m_homeBuilding == 0)
                                 {
-                                    Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+                                   ReleaseCitizen(citizenID);
                                     return;
                                 }
                                 if (data.m_workBuilding != 0)
@@ -578,7 +590,7 @@ namespace DifficultyMod
                             }
                             break;
                         }
-                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+                       ReleaseCitizen(citizenID);
                         return;
 
                     case Citizen.Location.Work:
@@ -655,7 +667,7 @@ namespace DifficultyMod
                             }
                             return;
                         }
-                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+                       ReleaseCitizen(citizenID);
                         return;
 
                     case Citizen.Location.Visit:
@@ -716,7 +728,7 @@ namespace DifficultyMod
                             }
                             return;
                         }
-                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+                       ReleaseCitizen(citizenID);
                         return;
 
                     case Citizen.Location.Moving:
@@ -748,7 +760,7 @@ namespace DifficultyMod
                             }
                             break;
                         }
-                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+                       ReleaseCitizen(citizenID);
                         return;
                 }
                 data.m_flags &= ~Citizen.Flags.NeedGoods;
@@ -820,7 +832,7 @@ namespace DifficultyMod
                     data.SetHome(citizenID, offer.Building, 0u);
                     if (data.m_homeBuilding == 0)
                     {
-                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
+                       ReleaseCitizen(citizenID);
                     }
                     return;
                 case TransferManager.TransferReason.PartnerYoung:
@@ -1167,7 +1179,7 @@ namespace DifficultyMod
                     if (data.m_workBuilding == 0)
                     {
                         int unemployed = data.Unemployed;
-                        num -= (unemployed * workRequirement) / 100;
+                        num -= (unemployed * workRequirement) / 50;
                         if (Singleton<UnlockManager>.instance.Unlocked(ItemClass.Service.PoliceDepartment))
                         {
                             data.Unemployed = unemployed + 1;
@@ -1186,6 +1198,7 @@ namespace DifficultyMod
                 {
                     data.Unemployed = 0;
                 }
+                num -= commuteHappinness[citizenID] / 2;
                 num = Mathf.Clamp(num, 0, 100);
                 data.m_wellbeing = (byte)num;
             }

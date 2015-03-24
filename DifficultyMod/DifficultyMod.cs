@@ -142,10 +142,12 @@ namespace DifficultyMod
 
             var mapping = new Dictionary<Type, Type>
             {
-                {typeof (ResidentialBuildingAI), typeof (WBBResidentialBuildingAI3)},
-                {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI)},
-                {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI6)},
-                {typeof (OfficeBuildingAI), typeof (WBOfficeBuildingAI5)},
+                {typeof (ResidentialBuildingAI), typeof (WBBResidentialBuildingAI6)},
+                {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI3)},
+                {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI7)},
+                {typeof (OfficeBuildingAI), typeof (WBOfficeBuildingAI8)},
+                {typeof (IndustrialExtractorAI), typeof (WBIndustrialExtractorAI)},
+
             };
 
             for (uint i = 0; i < PrefabCollection<BuildingInfo>.PrefabCount(); i++)
@@ -180,11 +182,17 @@ namespace DifficultyMod
             for (uint i = 0; i < PrefabCollection<VehicleInfo>.PrefabCount(); i++)
             {
                 var vi = PrefabCollection<VehicleInfo>.GetPrefab(i);
-                AdjustVehicleAI(vi, mapping);
+                if (vi.m_vehicleAI.GetType().Equals(typeof(PassengerTrainAI)))
+                {
+                    ((PassengerTrainAI)vi.m_vehicleAI).m_passengerCapacity = 70;
+                }
+                else {
+                    AdjustVehicleAI(vi, mapping);
+                }
             }
             mapping = new Dictionary<Type, Type>
             {
-                {typeof (ResidentAI), typeof (WBResidentAI4)},
+                {typeof (ResidentAI), typeof (WBResidentAI6)},
             };
 
 
@@ -203,6 +211,7 @@ namespace DifficultyMod
             //for (uint i = 0; i < PrefabCollection<NetInfo>.PrefabCount(); i++)
             //{
             //    var vi = PrefabCollection<NetInfo>.GetPrefab(i);
+                
             //    AdjustNetAI(vi, mapping);
             //}
 

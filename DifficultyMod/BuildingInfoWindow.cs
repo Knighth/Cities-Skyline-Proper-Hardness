@@ -305,13 +305,29 @@ namespace DifficultyMod
             float happy;
             float commute;
             WBLevelUp9.GetEducationHappyScore(buildingId,out education,out happy,out commute);
-            SetProgress(educationBar, education, WBLevelUp9.GetEducationThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp9.GetEducationThreshhold(data.Info.m_class.m_level, zone));            
-            SetPos(educationLabel, educationBar, x, y, true);
-            y += vertPadding;
+
+            if (zone == ItemClass.Zone.CommercialHigh || zone == ItemClass.Zone.CommercialLow)
+            {
+                SetPos(educationLabel, educationBar, x, y, false);
+            }
+            else
+            {
+                SetProgress(educationBar, education, WBLevelUp9.GetEducationThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp9.GetEducationThreshhold(data.Info.m_class.m_level, zone));
+                SetPos(educationLabel, educationBar, x, y, true);
+                y += vertPadding;
+            }
+            
 
             if (zone == ItemClass.Zone.ResidentialHigh || zone == ItemClass.Zone.ResidentialLow)
             {
-                SetProgress(wealthBar, data.m_customBuffer1, WBLevelUp9.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1))), WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level));
+                SetProgress(wealthBar, data.m_customBuffer1, WBLevelUp9.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level, zone));
+                SetPos(wealthLabel, wealthBar, x, y, true);
+                y += vertPadding;
+            }
+            else if (zone == ItemClass.Zone.CommercialHigh || zone == ItemClass.Zone.CommercialLow)
+            {
+
+                SetProgress(wealthBar, education, WBLevelUp9.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level, zone));
                 SetPos(wealthLabel, wealthBar, x, y, true);
                 y += vertPadding;
             }
@@ -337,12 +353,10 @@ namespace DifficultyMod
         {
             if (target == int.MaxValue)
             {
-                serviceBar.value = 1f;
+                target = start;
+                start -= 20;
             }
-            else
-            {
-                serviceBar.value = Mathf.Clamp((val - start) / (float)(target - start),0f,1f);
-            }
+            serviceBar.value = Mathf.Clamp((val - start) / (float)(target - start),0f,1f);
         }
 
         private InstanceID GetParentInstanceId()

@@ -58,6 +58,8 @@
     <Compile Include="OptionsWindow.cs" />
     <Compile Include="SaveData.cs" />
     <Compile Include="TransportLineAI.cs" />
+    <Compile Include="CitizenHelper.cs" />
+    <Compile Include="WBIndustrialExtractorAI.cs" />
     <Compile Include="WBOfficeBuildingAI.cs" />
     <Compile Include="WBResidentAI.cs" />
     <Compile Include="WBIndustrialBuildingAI.cs" />

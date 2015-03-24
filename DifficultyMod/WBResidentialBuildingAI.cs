@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DifficultyMod
 {
-    public class WBBResidentialBuildingAI3 : ResidentialBuildingAI
+    public class WBBResidentialBuildingAI6 : ResidentialBuildingAI
     {
         private FireSpread fs = new FireSpread();
 
@@ -44,6 +44,69 @@ namespace DifficultyMod
             {
                 fs.ExtraFireSpread(buildingID, ref buildingData, 45, this.m_info.m_size.y);
             }
+
+            if ((buildingData.m_flags & Building.Flags.BurnedDown) != Building.Flags.None || (buildingData.m_flags & Building.Flags.Abandoned) != Building.Flags.None)
+            {
+                float radius = (float)(buildingData.Width + buildingData.Length) * 15.0f;
+                Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Abandonment, 40, buildingData.m_position, radius);
+            }
+            else if (buildingData.m_fireIntensity == 0)
+            {
+                DistrictManager instance = Singleton<DistrictManager>.instance;
+                byte district = instance.GetDistrict(buildingData.m_position);
+                DistrictPolicies.Taxation taxationPolicies = instance.m_districts.m_buffer[(int)district].m_taxationPolicies;
+                DistrictPolicies.Services servicePolicies = instance.m_districts.m_buffer[(int)district].m_servicePolicies;
+
+                int baseIncome = CitizenHelper.GetBaseIncome(buildingData.Info.m_class.m_level, buildingData.Info.m_class.GetZone());
+                if ((servicePolicies & DistrictPolicies.Services.Recycling) != DistrictPolicies.Services.None)
+                {
+                    baseIncome = baseIncome * 95 / 100;
+                }
+
+                int income = 0;
+                GetCitizenIncome(buildingID, ref buildingData, ref income);
+
+                income = (income * baseIncome + 9999) / 10000;
+                int percentage = 100;
+                if (buildingData.m_electricityProblemTimer >= 1 || buildingData.m_waterProblemTimer >= 1 || buildingData.m_waterProblemTimer >= 1 || buildingData.m_garbageBuffer > 60000)
+                {
+                    percentage = 0;
+                }
+                if (this.CanSufferFromFlood())
+                {
+                    float num18 = Singleton<TerrainManager>.instance.WaterLevel(VectorUtils.XZ(buildingData.m_position));
+                    if (num18 > buildingData.m_position.y)
+                    {
+                        percentage = 0;
+                    }
+                }
+                
+                income = (income * percentage + 99) / 100;
+                if (income > 0)
+                {
+                    Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.PrivateIncome, -income, this.m_info.m_class, taxationPolicies);
+                }
+            }
+        }
+
+        private void GetCitizenIncome(ushort buildingID, ref Building buildingData, ref int income)
+        {
+            CitizenManager instance = Singleton<CitizenManager>.instance;
+            uint num = buildingData.m_citizenUnits;
+            int num2 = 0;
+            while (num != 0u)
+            {
+                if ((ushort)(instance.m_units.m_buffer[(int)((UIntPtr)num)].m_flags & CitizenUnit.Flags.Home) != 0)
+                {
+                    CitizenHelper.GetCitizenIncome(instance.m_units.m_buffer[(int)((UIntPtr)num)], ref income);
+                }
+                num = instance.m_units.m_buffer[(int)((UIntPtr)num)].m_nextUnit;
+                if (++num2 > 524288)
+                {
+                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                    break;
+                }
+            }
         }
 
         public override void ModifyMaterialBuffer(ushort buildingID, ref Building data, TransferManager.TransferReason material, ref int amountDelta)
@@ -57,7 +120,7 @@ namespace DifficultyMod
                     {
                         if (data.m_customBuffer1 == 0)
                         {
-                            data.m_customBuffer1 = (ushort)(120 + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level - 1));
+                            data.m_customBuffer1 = (ushort)(120 + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level - 1, data.Info.m_class.GetZone()));
                         }
 
                         if (amountDelta > 0)
@@ -65,7 +128,7 @@ namespace DifficultyMod
                             DistrictManager instance = Singleton<DistrictManager>.instance;
                             byte district = instance.GetDistrict(data.m_position);
                             DistrictPolicies.Taxation taxationPolicies = instance.m_districts.m_buffer[(int)district].m_taxationPolicies;
-                            int taxRate = Singleton<EconomyManager>.instance.GetTaxRate(this.m_info.m_class, taxationPolicies);                            
+                            int taxRate = Singleton<EconomyManager>.instance.GetTaxRate(this.m_info.m_class, taxationPolicies);
                             amountDelta += (50 - taxRate * 4);
                             amountDelta = Math.Max(2, amountDelta / CalculateHomeCount(data));
                         }
@@ -132,52 +195,23 @@ namespace DifficultyMod
             return Mathf.Max(100, data.m_width * data.m_length * num) / 100;
         }
 
-        public override string GetLocalizedStatus(ushort buildingID, ref Building data)
+        public override float GetEventImpact(ushort buildingID, ref Building data, ImmaterialResourceManager.Resource resource, float amount)
         {
-            if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.Vanilla)
+            if ((data.m_flags & (Building.Flags.Abandoned | Building.Flags.BurnedDown)) != Building.Flags.None)
             {
-                return base.GetLocalizedStatus(buildingID, ref data);
+                return 0f;
             }
-
-            var wealth = data.m_customBuffer1;
-            if (wealth == 0)
+            float result = WBLevelUp9.GetEventImpact(buildingID, data, resource, amount);
+            if (result != 0)
             {
-                wealth = (ushort)(120 + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level - 1));
-            }
-            var result = base.GetLocalizedStatus(buildingID, ref data) + "  Wealth: " + wealth.ToString();
-            if (data.Info.m_class.m_level != ItemClass.Level.Level5){
-                result += "/" + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level);
+                return result;
             }
             else
             {
+                return base.GetEventImpact(buildingID, ref data, resource, amount);
             }
-            int landValue;
-            Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(ImmaterialResourceManager.Resource.LandValue, data.m_position, out landValue);
-            result += "  Land Value: " + landValue;
-            if (data.Info.m_class.m_level != ItemClass.Level.Level5)
-            {
-                result += "/" + WBLevelUp9.GetLandValueThreshhold(data.Info.m_class.m_level);
-            }
-            else
-            {
-                result += " (Max Level)";
-            }
-
-            if (wealth < WBLevelUp9.GetWealthThreshhold((ItemClass.Level)Math.Max(-1, (int)data.Info.m_class.m_level - 2)))
-            {
-                result += " Wealth too low for level! (" + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level-1) + " min)";
-            }
-            if (landValue < WBLevelUp9.GetLandValueThreshhold((ItemClass.Level)Math.Max(-1, (int)data.Info.m_class.m_level - 2)))
-            {
-                result += " Land value too low for level! (" + WBLevelUp9.GetLandValueThreshhold(data.Info.m_class.m_level - 1) + " min)";
-            }
-            return result;
         }
 
-        internal void UpdateLevelUpInfo(Dictionary<ImmaterialResourceManager.Resource, ColossalFramework.UI.UIProgressBar> dictionary1, Dictionary<ImmaterialResourceManager.Resource, ColossalFramework.UI.UIProgressBar> dictionary2, ColossalFramework.UI.UIProgressBar uIProgressBar1, ColossalFramework.UI.UIProgressBar uIProgressBar2, ColossalFramework.UI.UIProgressBar uIProgressBar3)
-        {
-            
-        }
     }
 
 }
