@@ -19,6 +19,7 @@ namespace DifficultyMod
             else if (data.m_blockCounter > 1)
             {
                 bc = (byte)Mathf.Min(bc + 1, 0xff);
+                WBResidentAI8.AddCommuteWait(data, 1);
             }
             if ((data.m_flags & Vehicle.Flags.Congestion) != Vehicle.Flags.None)
             {

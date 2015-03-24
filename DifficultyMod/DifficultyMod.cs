@@ -29,7 +29,7 @@ namespace DifficultyMod
         }
     }
 
-    public class LoadingExtension56 : LoadingExtensionBase
+    public class LoadingExtension7 : LoadingExtensionBase
     {
         static GameObject modGameObject;
         OptionsWindow2 optionsWindow;
@@ -184,7 +184,7 @@ namespace DifficultyMod
             }
             mapping = new Dictionary<Type, Type>
             {
-                {typeof (ResidentAI), typeof (WBResidentAI6)},
+                {typeof (ResidentAI), typeof (WBResidentAI8)},
             };
 
 
@@ -194,17 +194,17 @@ namespace DifficultyMod
                 AdjustResidentAI(vi, mapping);
             }
 
-            mapping = new Dictionary<Type, Type>
-            {
-                {typeof (TransportLineAI), typeof (WBTransportLineAI2)},
-            };
+            //mapping = new Dictionary<Type, Type>
+            //{
+            //    {typeof (TransportLineAI), typeof (WBTransportLineAI2)},
+            //};
 
 
-            for (uint i = 0; i < PrefabCollection<NetInfo>.PrefabCount(); i++)
-            {
-                var vi = PrefabCollection<NetInfo>.GetPrefab(i);
-                AdjustNetAI(vi, mapping);
-            }
+            //for (uint i = 0; i < PrefabCollection<NetInfo>.PrefabCount(); i++)
+            //{
+            //    var vi = PrefabCollection<NetInfo>.GetPrefab(i);
+            //    AdjustNetAI(vi, mapping);
+            //}
 
             Singleton<UnlockManager>.instance.MilestonesUpdated();
             DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Loaded proper hardness. " + sd.DifficultyLevel.ToString());

@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace DifficultyMod
 {
-    public class WBLevelUp8 : LevelUpExtensionBase
+    public class WBLevelUp9 : LevelUpExtensionBase
     {
 
         public static double GetPollutionFactor(ItemClass.Zone zone)
@@ -119,26 +119,85 @@ namespace DifficultyMod
             return (int)num2;
         }
 
-        public static void GetEducationHappyScore(ushort buildingID, out float education, out float happy)
+        public static void GetEducationHappyScore(ushort buildingID, out float education, out float happy,out float commute)
         {
             Citizen.BehaviourData behaviourData = default(Citizen.BehaviourData);
             Building data = Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)buildingID];
+            ItemClass.Zone zone = data.Info.m_class.GetZone();
+                        
             int alive = 0;
             int total = 0;
-            GetWorkBehaviour(buildingID, ref data, ref behaviourData, ref alive, ref total);
-            if (alive == 0)
+            int homeCount = 0;
+            int aliveHomeCount = 0;
+            int emptyHome = 0;
+
+            if (zone == ItemClass.Zone.ResidentialLow || zone == ItemClass.Zone.ResidentialHigh)
             {
-                education = 0;
-                happy = 0;
+                GetHomeBehaviour(buildingID, data, ref behaviourData, ref alive, ref total, ref homeCount, ref aliveHomeCount, ref emptyHome);
+                if (alive > 0)
+                {
+                    int num = behaviourData.m_educated1Count + behaviourData.m_educated2Count * 2 + behaviourData.m_educated3Count * 3;
+                    int num2 = behaviourData.m_teenCount + behaviourData.m_youngCount * 2 + behaviourData.m_adultCount * 3 + behaviourData.m_seniorCount * 3;
+                    education = 100 * num / (float)(alive * 6f);
+                    happy = 100 * behaviourData.m_wellbeingAccumulation / (float)(alive * 255);
+                    GetCommute(buildingID, data, out commute);
+                    return;
+                }
             }
             else
             {
-                int num = behaviourData.m_educated1Count + behaviourData.m_educated2Count * 2 + behaviourData.m_educated3Count * 3;
-                education = 16.667f * num / (float)alive;
-                happy = behaviourData.m_wellbeingAccumulation / (float)alive;
+                GetWorkBehaviour(buildingID, ref data, ref behaviourData, ref alive, ref total);
+                if (alive > 0)
+                {
+                    int num = behaviourData.m_educated1Count + behaviourData.m_educated2Count * 2 + behaviourData.m_educated3Count * 3;
+                    education = 100 * num / (float)(alive * 6f);
+                    happy = 100 * behaviourData.m_wellbeingAccumulation / (float)(alive * 255);
+                    GetCommute(buildingID, data, out commute);
+                    return;
+                }
             }
+
+            education = 0;
+            happy = 0;
+            commute = 0;
         }
 
+        public static void GetHomeBehaviour(ushort buildingID, Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveCount, ref int totalCount, ref int homeCount, ref int aliveHomeCount, ref int emptyHomeCount)
+        {
+            CitizenManager instance = Singleton<CitizenManager>.instance;
+            uint num = buildingData.m_citizenUnits;
+            int num2 = 0;
+            while (num != 0u)
+            {
+            //    if ((ushort)(instance.m_units.m_buffer[(int)((UIntPtr)num)].m_flags & CitizenUnit.Flags.Home) != 0)
+            //    {
+                    int num3 = 0;
+                    int num4 = 0;
+                    instance.m_units.m_buffer[(int)((UIntPtr)num)].GetCitizenHomeBehaviour(ref behaviour, ref num3, ref num4);
+                    if (num3 != 0)
+                    {
+                        aliveHomeCount++;
+                        aliveCount += num3;
+                    }
+                    if (num4 != 0)
+                    {
+                        totalCount += num4;
+                    }
+                    else
+                    {
+                        emptyHomeCount++;
+                    }
+                    homeCount++;
+                //}
+                num = instance.m_units.m_buffer[(int)((UIntPtr)num)].m_nextUnit;
+                if (++num2 > 524288)
+                {
+                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                    break;
+                }
+            }
+        }
+        
         public static void GetWorkBehaviour(ushort buildingID, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveCount, ref int totalCount)
         {
             CitizenManager instance = Singleton<CitizenManager>.instance;
@@ -155,6 +214,71 @@ namespace DifficultyMod
                 {
                     CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
                     break;
+                }
+            }
+        }
+
+        public static void GetCommute(ushort buildingID, Building buildingData, out float commute)
+        {
+            int count = 0;
+            int commuteTotal = 0;
+            CitizenManager instance = Singleton<CitizenManager>.instance;
+            uint num = buildingData.m_citizenUnits;
+            int num2 = 0;
+            while (num != 0u)
+            {
+                GetCommute(instance.m_units.m_buffer[(int)((UIntPtr)num)], ref commuteTotal, ref count);                
+                num = instance.m_units.m_buffer[(int)((UIntPtr)num)].m_nextUnit;
+                if (++num2 > 524288)
+                {
+                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                    break;
+                }
+            }
+            if (count <= 0)
+            {
+                commute = 0;
+            }
+            else
+            {
+                commute = (commuteTotal * 100) / (float)(count * 255);
+            }
+        }
+
+        public static void GetCommute(CitizenUnit unit, ref int commute,ref int count)
+        {
+            CitizenManager instance = Singleton<CitizenManager>.instance;
+            if (unit.m_citizen0 != 0u)
+            {
+                GetCommute(unit.m_citizen0, instance.m_citizens.m_buffer[unit.m_citizen0], ref commute, ref count);
+            }
+            if (unit.m_citizen1 != 0u)
+            {
+                GetCommute(unit.m_citizen1, instance.m_citizens.m_buffer[unit.m_citizen1], ref commute, ref count);
+            }
+            if (unit.m_citizen2 != 0u)
+            {
+                GetCommute(unit.m_citizen2, instance.m_citizens.m_buffer[unit.m_citizen2], ref commute, ref count);
+            }
+            if (unit.m_citizen3 != 0u)
+            {
+                GetCommute(unit.m_citizen3, instance.m_citizens.m_buffer[unit.m_citizen3], ref commute, ref count);
+            }
+            if (unit.m_citizen4 != 0u)
+            {
+                GetCommute(unit.m_citizen4, instance.m_citizens.m_buffer[unit.m_citizen4], ref commute, ref count);
+            }
+        }
+
+        public static void GetCommute(uint citizenID, Citizen cit, ref int commute, ref int count)
+        {
+            var ageGroup = Citizen.GetAgeGroup(cit.m_age);
+            if (!cit.Dead)
+            {
+                var comm =  WBResidentAI8.GetCommute(citizenID);
+                if (comm > 0){
+                    commute += comm;
+                    count += 1;
                 }
             }
         }
@@ -246,6 +370,69 @@ namespace DifficultyMod
             }
             return int.MaxValue;
         }
+
+        public static int GetEducationThreshhold(ItemClass.Level level, ItemClass.Zone zone)
+        {      
+                if (level == ItemClass.Level.None)
+                {
+                    return 0;
+                }
+            if (zone == ItemClass.Zone.ResidentialHigh || zone == ItemClass.Zone.ResidentialLow)
+            {
+                if (level == ItemClass.Level.Level1)
+                {
+                    return 20;
+                }
+                else if (level == ItemClass.Level.Level2)
+                {
+                    return 35;
+                }
+                else if (level == ItemClass.Level.Level3)
+                {
+                    return 50;
+                }
+                else if (level == ItemClass.Level.Level4)
+                {
+                    return 70;
+                }
+                else
+                {
+                    return int.MaxValue;
+                }
+            }
+            else if (zone == ItemClass.Zone.Industrial)
+            {
+                if (level == ItemClass.Level.Level1)
+                {
+                    return 30;
+                }
+                else if (level == ItemClass.Level.Level2)
+                {
+                    return 60;
+                }
+                else
+                {
+                    return int.MaxValue;
+                }
+            }
+            else
+            {
+
+                if (level == ItemClass.Level.Level1)
+                {
+                    return 35;
+                }
+                else if (level == ItemClass.Level.Level2)
+                {
+                    return 70;
+                }
+                else
+                {
+                    return int.MaxValue;
+                }
+            }
+        }
+
 
         public static int GetWealthThreshhold(ItemClass.Level level)
         {
@@ -623,7 +810,6 @@ namespace DifficultyMod
             }
             return constructionCost / 2;
         }
-
     }
 
     public class UnlockAllMilestones : MilestonesExtensionBase

@@ -20,14 +20,6 @@ namespace DifficultyMod
 
             if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Vanilla)
             {
-                Citizen.BehaviourData behaviourData = default(Citizen.BehaviourData);
-                int num = 0;
-                int citizenCount = 0;
-                int num2 = 0;
-                int aliveHomeCount = 0;
-                int num3 = 0;
-                this.GetHomeBehaviour(buildingID, ref buildingData, ref behaviourData, ref num, ref citizenCount, ref num2, ref aliveHomeCount, ref num3);
-
                 Notification.Problem problem = Notification.RemoveProblems(buildingData.m_problems, Notification.Problem.TooFewServices);
                 if (buildingData.m_customBuffer1 != 0 && buildingData.m_customBuffer1 < 10)
                 {
@@ -54,43 +46,6 @@ namespace DifficultyMod
             }
         }
 
-
-        protected void GetHomeBehaviour(ushort buildingID, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveCount, ref int totalCount, ref int homeCount, ref int aliveHomeCount, ref int emptyHomeCount)
-        {
-            CitizenManager instance = Singleton<CitizenManager>.instance;
-            uint num = buildingData.m_citizenUnits;
-            int num2 = 0;
-            while (num != 0u)
-            {
-                if ((ushort)(instance.m_units.m_buffer[(int)((UIntPtr)num)].m_flags & CitizenUnit.Flags.Home) != 0)
-                {
-                    int num3 = 0;
-                    int num4 = 0;
-                    instance.m_units.m_buffer[(int)((UIntPtr)num)].GetCitizenHomeBehaviour(ref behaviour, ref num3, ref num4);
-                    if (num3 != 0)
-                    {
-                        aliveHomeCount++;
-                        aliveCount += num3;
-                    }
-                    if (num4 != 0)
-                    {
-                        totalCount += num4;
-                    }
-                    else
-                    {
-                        emptyHomeCount++;
-                    }
-                    homeCount++;
-                }
-                num = instance.m_units.m_buffer[(int)((UIntPtr)num)].m_nextUnit;
-                if (++num2 > 524288)
-                {
-                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
-                    break;
-                }
-            }
-        }
-
         public override void ModifyMaterialBuffer(ushort buildingID, ref Building data, TransferManager.TransferReason material, ref int amountDelta)
         {
             switch (material)
@@ -102,7 +57,7 @@ namespace DifficultyMod
                     {
                         if (data.m_customBuffer1 == 0)
                         {
-                            data.m_customBuffer1 = (ushort)(120 + WBLevelUp8.GetWealthThreshhold(data.Info.m_class.m_level - 1));
+                            data.m_customBuffer1 = (ushort)(120 + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level - 1));
                         }
 
                         if (amountDelta > 0)
@@ -110,7 +65,7 @@ namespace DifficultyMod
                             DistrictManager instance = Singleton<DistrictManager>.instance;
                             byte district = instance.GetDistrict(data.m_position);
                             DistrictPolicies.Taxation taxationPolicies = instance.m_districts.m_buffer[(int)district].m_taxationPolicies;
-                            int taxRate = Singleton<EconomyManager>.instance.GetTaxRate(this.m_info.m_class, taxationPolicies);
+                            int taxRate = Singleton<EconomyManager>.instance.GetTaxRate(this.m_info.m_class, taxationPolicies);                            
                             amountDelta += (50 - taxRate * 4);
                             amountDelta = Math.Max(2, amountDelta / CalculateHomeCount(data));
                         }
@@ -119,7 +74,7 @@ namespace DifficultyMod
 
                             amountDelta = Math.Min(-2, amountDelta / CalculateHomeCount(data));
                         }
-                        
+
                         data.m_customBuffer1 = (ushort)Mathf.Clamp(data.m_customBuffer1 + amountDelta, 1, 30000);
                         return;
                     }
@@ -187,11 +142,11 @@ namespace DifficultyMod
             var wealth = data.m_customBuffer1;
             if (wealth == 0)
             {
-                wealth = (ushort)(120 + WBLevelUp8.GetWealthThreshhold(data.Info.m_class.m_level - 1));
+                wealth = (ushort)(120 + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level - 1));
             }
             var result = base.GetLocalizedStatus(buildingID, ref data) + "  Wealth: " + wealth.ToString();
             if (data.Info.m_class.m_level != ItemClass.Level.Level5){
-                result += "/" + WBLevelUp8.GetWealthThreshhold(data.Info.m_class.m_level);
+                result += "/" + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level);
             }
             else
             {
@@ -201,20 +156,20 @@ namespace DifficultyMod
             result += "  Land Value: " + landValue;
             if (data.Info.m_class.m_level != ItemClass.Level.Level5)
             {
-                result += "/" + WBLevelUp8.GetLandValueThreshhold(data.Info.m_class.m_level);
+                result += "/" + WBLevelUp9.GetLandValueThreshhold(data.Info.m_class.m_level);
             }
             else
             {
                 result += " (Max Level)";
             }
 
-            if (wealth < WBLevelUp8.GetWealthThreshhold((ItemClass.Level)Math.Max(-1, (int)data.Info.m_class.m_level - 2)))
+            if (wealth < WBLevelUp9.GetWealthThreshhold((ItemClass.Level)Math.Max(-1, (int)data.Info.m_class.m_level - 2)))
             {
-                result += " Wealth too low for level! (" + WBLevelUp8.GetWealthThreshhold(data.Info.m_class.m_level-1) + " min)";
+                result += " Wealth too low for level! (" + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level-1) + " min)";
             }
-            if (landValue < WBLevelUp8.GetLandValueThreshhold((ItemClass.Level)Math.Max(-1, (int)data.Info.m_class.m_level - 2)))
+            if (landValue < WBLevelUp9.GetLandValueThreshhold((ItemClass.Level)Math.Max(-1, (int)data.Info.m_class.m_level - 2)))
             {
-                result += " Land value too low for level! (" + WBLevelUp8.GetLandValueThreshhold(data.Info.m_class.m_level - 1) + " min)";
+                result += " Land value too low for level! (" + WBLevelUp9.GetLandValueThreshhold(data.Info.m_class.m_level - 1) + " min)";
             }
             return result;
         }

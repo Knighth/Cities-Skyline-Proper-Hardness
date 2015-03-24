@@ -80,7 +80,7 @@ namespace DifficultyMod
 
             waitLabel = AddUIComponent<UILabel>();
             commuteWaitTimeBar = AddUIComponent<UIProgressBar>();
-
+            
             happyLabel = AddUIComponent<UILabel>();
             happyBar = AddUIComponent<UIProgressBar>();
             base.Awake();
@@ -154,6 +154,8 @@ namespace DifficultyMod
 
             SetLabel(waitLabel, "Commute Time");
             SetBar(commuteWaitTimeBar);
+            commuteWaitTimeBar.tooltip = "Average time cims spend waiting (for public transport or stopped in traffic), affects their happiness.";
+            commuteWaitTimeBar.progressColor = Color.red;
             y += vertPadding;
 
             SetLabel(happyLabel, "Happiness");
@@ -198,7 +200,7 @@ namespace DifficultyMod
 
         public override void Update()
         {
-            if (this.baseBuildingWindow != null && this.enabled && isVisible && Singleton<BuildingManager>.exists && (Singleton<SimulationManager>.instance.m_currentFrameIndex & 15u) == 15u)
+            if (this.baseBuildingWindow != null && this.enabled && isVisible && Singleton<BuildingManager>.exists && (Singleton<SimulationManager>.instance.m_currentFrameIndex & 7u) == 7u)
             {
                 var instanceId = GetParentInstanceId();
                 if (instanceId.Type == InstanceType.Building && instanceId.Building != 0)
@@ -225,23 +227,23 @@ namespace DifficultyMod
             double totalNegativeFactor = 0;
             foreach (var resBar in this.resourceBars)
             {
-                if (WBLevelUp8.GetFactor(zone, resBar.Key) > 0)
+                if (WBLevelUp9.GetFactor(zone, resBar.Key) > 0)
                 {
-                    totalFactor += WBLevelUp8.GetFactor(zone, resBar.Key);
+                    totalFactor += WBLevelUp9.GetFactor(zone, resBar.Key);
                 }
                 else
                 {
-                    totalNegativeFactor -= WBLevelUp8.GetFactor(zone, resBar.Key);
+                    totalNegativeFactor -= WBLevelUp9.GetFactor(zone, resBar.Key);
                 }
             }
-            totalNegativeFactor -= WBLevelUp8.GetPollutionFactor(zone);
+            totalNegativeFactor -= WBLevelUp9.GetPollutionFactor(zone);
 
             var x = 14f;
             var negativeX = 14f;
             foreach (var resBar in this.resourceBars)
             {
                 var label = this.resourceLabels[resBar.Key];
-                var factor = WBLevelUp8.GetFactor(zone, resBar.Key);
+                var factor = WBLevelUp9.GetFactor(zone, resBar.Key);
                 if (factor == 0)
                 {
                     label.Hide();
@@ -251,7 +253,7 @@ namespace DifficultyMod
                 {
                     label.Show();
                     resBar.Value.Show();
-                    var value = WBLevelUp8.GetServiceScore(resBar.Key, zone, array, num);
+                    var value = WBLevelUp9.GetServiceScore(resBar.Key, zone, array, num);
 
                     if (factor > 0)
                     {
@@ -268,18 +270,19 @@ namespace DifficultyMod
                         negativeX += resBar.Value.size.x;
                         resBar.Value.progressColor = Color.red;
                     }
-                    resBar.Value.value = (float)(value / 100);
+                    resBar.Value.value = (float)(value / 100f);
                     //label.text = value.ToString();
                 }
             }
 
-            if (WBLevelUp8.GetPollutionFactor(zone) < 0)
+            if (WBLevelUp9.GetPollutionFactor(zone) < 0)
             {
-                var value = WBLevelUp8.GetPollutionScore(data, zone);
-                var factor = WBLevelUp8.GetPollutionFactor(zone);
+                var value = WBLevelUp9.GetPollutionScore(data, zone);
+                var factor = WBLevelUp9.GetPollutionFactor(zone);
 
                 pollutionBar.size = new Vector2((float)(barWidth * -factor / totalNegativeFactor), 16);
                 pollutionLabel.relativePosition = new Vector3(negativeX, 56);
+                pollutionBar.value = (float)value / 100f;
                 pollutionBar.relativePosition = new Vector3(negativeX, 36);
                 negativeX += pollutionBar.size.x;
 
@@ -294,44 +297,43 @@ namespace DifficultyMod
 
             x = 14f;
             float y = 70f;            
-            SetProgress(serviceBar,WBLevelUp8.GetProperServiceScore(buildingId), WBLevelUp8.GetServiceThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)),zone),WBLevelUp8.GetServiceThreshhold(data.Info.m_class.m_level,zone));
+            SetProgress(serviceBar,WBLevelUp9.GetProperServiceScore(buildingId), WBLevelUp9.GetServiceThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)),zone),WBLevelUp9.GetServiceThreshhold(data.Info.m_class.m_level,zone));
             SetPos(serviceLabel, serviceBar, x, y,true);
             y += vertPadding;
 
             float education;
             float happy;
-            WBLevelUp8.GetEducationHappyScore(buildingId,out education,out happy);
-            SetProgress(educationBar,(int)education, WBLevelUp8.GetServiceThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp8.GetServiceThreshhold(data.Info.m_class.m_level, zone));
-            educationLabel.text = education.ToString();
+            float commute;
+            WBLevelUp9.GetEducationHappyScore(buildingId,out education,out happy,out commute);
+            SetProgress(educationBar, education, WBLevelUp9.GetEducationThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp9.GetEducationThreshhold(data.Info.m_class.m_level, zone));            
             SetPos(educationLabel, educationBar, x, y, true);
             y += vertPadding;
 
             if (zone == ItemClass.Zone.ResidentialHigh || zone == ItemClass.Zone.ResidentialLow)
             {
-                SetProgress(wealthBar, data.m_customBuffer1, WBLevelUp8.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1))), WBLevelUp8.GetWealthThreshhold(data.Info.m_class.m_level));
+                SetProgress(wealthBar, data.m_customBuffer1, WBLevelUp9.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1))), WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level));
                 SetPos(wealthLabel, wealthBar, x, y, true);
-                y += vertPadding;
-
-                SetPos(waitLabel, commuteWaitTimeBar, x, y, true);
-                y += vertPadding;
-
-
-                SetProgress(happyBar, (int)happy, WBLevelUp8.GetServiceThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp8.GetServiceThreshhold(data.Info.m_class.m_level, zone));
-                SetPos(happyLabel, happyBar, x, y, true);
-                happyLabel.text = happy.ToString();
                 y += vertPadding;
             }
             else
             {
                 SetPos(wealthLabel, wealthBar, x, y, false);
-                SetPos(waitLabel, commuteWaitTimeBar, x, y, false);
-                SetPos(happyLabel, happyBar, x, y, false);
             }
+            y += 10;
+
+            SetProgress(happyBar, happy, 0, 100);
+            SetPos(happyLabel, happyBar, x, y, true);
+            y += vertPadding;
+
+            SetProgress(commuteWaitTimeBar, commute, 0, 100);            
+            SetPos(waitLabel, commuteWaitTimeBar, x, y, true);
+            y += vertPadding;
+
             
             height = y;
         }
 
-        private void SetProgress(UIProgressBar serviceBar,int val, int start, int target)
+        private void SetProgress(UIProgressBar serviceBar, float val, float start, float target)
         {
             if (target == int.MaxValue)
             {
