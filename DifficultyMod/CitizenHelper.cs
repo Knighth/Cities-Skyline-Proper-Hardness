@@ -6,37 +6,46 @@ using System.Text;
 
 namespace DifficultyMod
 {
-    class CitizenHelper
+    class CitizenHelper5
     {
+
         public static void GetCitizenIncome(CitizenUnit citizenUnit, ref int income)
+        {
+            int tourists = 0;
+            GetCitizenIncome(citizenUnit, ref income,ref tourists);
+        }
+
+        public static void GetCitizenIncome(CitizenUnit citizenUnit, ref int income,ref int tourists)
         {
             CitizenManager instance = Singleton<CitizenManager>.instance;
             if (citizenUnit.m_citizen0 != 0u)
             {
-                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen0)], ref income);
+                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen0)], ref income,ref tourists);
             }
             if (citizenUnit.m_citizen1 != 0u)
             {
-                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen1)], ref income);
+                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen1)], ref income, ref tourists);
             }
             if (citizenUnit.m_citizen2 != 0u)
             {
-                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen2)], ref income);
+                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen2)], ref income, ref tourists);
             }
             if (citizenUnit.m_citizen3 != 0u)
             {
-                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen3)], ref income);
+                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen3)], ref income, ref tourists);
             }
             if (citizenUnit.m_citizen4 != 0u)
             {
-                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen4)], ref income);
+                GetCitizenIncome(instance.m_citizens.m_buffer[(int)((UIntPtr)citizenUnit.m_citizen4)], ref income, ref tourists);
             }
         }
 
-        public static void GetCitizenIncome(Citizen citizen, ref int income)
+
+        public static void GetCitizenIncome(Citizen citizen, ref int income,ref int tourists)
         {
             if ((citizen.m_flags & Citizen.Flags.MovingIn) == Citizen.Flags.None && !citizen.Dead)
             {
+                bool tourist = ((citizen.m_flags & Citizen.Flags.Tourist) != Citizen.Flags.None);
                 int age = citizen.Age;
                 Citizen.Education educationLevel = citizen.EducationLevel;
                 Citizen.AgePhase agePhase = Citizen.GetAgePhase(educationLevel, age);
@@ -47,11 +56,7 @@ namespace DifficultyMod
                 {
                     result -= 50;
                 }
-                switch (agePhase)
-                {
-                }
-
-                if (unemployed == 0)
+                if (unemployed == 0 || tourist)
                 {
                     switch (agePhase)
                     {
@@ -71,7 +76,7 @@ namespace DifficultyMod
                             result += 60;
                             break;
                         case Citizen.AgePhase.Young2:
-                            result += 75;
+                            result += 70;
                             break;
                         case Citizen.AgePhase.Adult0:
                             result += 50;
@@ -83,7 +88,7 @@ namespace DifficultyMod
                             result += 70;
                             break;
                         case Citizen.AgePhase.Adult3:
-                            result += 85;
+                            result += 80;
                             break;
                         case Citizen.AgePhase.Senior0:
                             result += 50;
@@ -95,12 +100,19 @@ namespace DifficultyMod
                             result += 70;
                             break;
                         case Citizen.AgePhase.Senior3:
-                            result += 85;
+                            result += 80;
                             break;
                     }
                 }
-                result += citizen.m_wellbeing - 60;
-                income += result;
+                result += citizen.m_health + citizen.m_wellbeing - 155;
+                if (tourist)
+                {
+                    tourists += result;
+                }
+                else
+                {
+                    income += result;
+                }                
             }
         }
 
@@ -189,74 +201,74 @@ namespace DifficultyMod
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 160;
+                            return 155;
                         case ItemClass.Level.Level2:
-                            return 200;
+                            return 150;
                         case ItemClass.Level.Level3:
-                            return 240;
+                            return 150;
                     }
                     break;
                 case ItemClass.Zone.CommercialLow:
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 200;
+                            return 190;
                         case ItemClass.Level.Level2:
-                            return 240;
+                            return 200;
                         case ItemClass.Level.Level3:
-                            return 280;
+                            return 210;
                     }
                     break;
                 case ItemClass.Zone.ResidentialHigh:
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 160;
+                            return 145;
                         case ItemClass.Level.Level2:
-                            return 190;
+                            return 145;
                         case ItemClass.Level.Level3:
-                            return 220;
+                            return 145;
                         case ItemClass.Level.Level4:
-                            return 250;
+                            return 145;
                         case ItemClass.Level.Level5:
-                            return 280;
+                            return 145;
                     }
                     break;
                 case ItemClass.Zone.ResidentialLow:
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 210;
+                            return 170;
                         case ItemClass.Level.Level2:
-                            return 240;
+                            return 180;
                         case ItemClass.Level.Level3:
-                            return 270;
+                            return 190;
                         case ItemClass.Level.Level4:
-                            return 300;
+                            return 195;
                         case ItemClass.Level.Level5:
-                            return 330;
+                            return 195;
                     }
                     break;
                 case ItemClass.Zone.Office:
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 160;
+                            return 170;
                         case ItemClass.Level.Level2:
-                            return 200;
+                            return 170;
                         case ItemClass.Level.Level3:
-                            return 240;
+                            return 170;
                     }
                     break;
                 case ItemClass.Zone.Industrial:
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 240;
+                            return 220;
                         case ItemClass.Level.Level2:
-                            return 280;
+                            return 230;
                         case ItemClass.Level.Level3:
-                            return 300;
+                            return 230;
                     }
                     break;
             }

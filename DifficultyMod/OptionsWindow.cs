@@ -42,7 +42,8 @@ namespace DifficultyMod
         public override void Start()
         {
             base.Start();
-
+            UIColorPicker cp = AddUIComponent<UIColorPicker>();
+            
             relativePosition = new Vector3(396, 58);
             backgroundSprite = "MenuPanel2";
             isVisible = true;

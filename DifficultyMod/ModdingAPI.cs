@@ -157,7 +157,7 @@ namespace DifficultyMod
 
             if (zone == ItemClass.Zone.ResidentialLow || zone == ItemClass.Zone.ResidentialHigh)
             {
-                CitizenHelper.GetHomeBehaviour(buildingID, data, ref behaviourData, ref alive, ref total, ref homeCount, ref aliveHomeCount, ref emptyHome);
+                CitizenHelper5.GetHomeBehaviour(buildingID, data, ref behaviourData, ref alive, ref total, ref homeCount, ref aliveHomeCount, ref emptyHome);
                 if (alive > 0)
                 {
                     int num = behaviourData.m_educated1Count + behaviourData.m_educated2Count * 2 + behaviourData.m_educated3Count * 3;
@@ -170,7 +170,7 @@ namespace DifficultyMod
             }
             else if(zone == ItemClass.Zone.CommercialHigh || zone == ItemClass.Zone.CommercialLow )
             {
-                CitizenHelper.GetVisitBehaviour(buildingID, data, ref behaviourData, ref alive, ref total);
+                CitizenHelper5.GetVisitBehaviour(buildingID, data, ref behaviourData, ref alive, ref total);
                 if (alive > 0)
                 {
                     int num = behaviourData.m_wealth1Count + behaviourData.m_wealth2Count * 2 + behaviourData.m_wealth3Count * 3;
@@ -190,7 +190,7 @@ namespace DifficultyMod
             }
             else
             {
-                CitizenHelper.GetWorkBehaviour(buildingID, data, ref behaviourData, ref alive, ref total);
+                CitizenHelper5.GetWorkBehaviour(buildingID, data, ref behaviourData, ref alive, ref total);
                 if (alive > 0)
                 {
                     int num = behaviourData.m_educated1Count + behaviourData.m_educated2Count * 2 + behaviourData.m_educated3Count * 3;

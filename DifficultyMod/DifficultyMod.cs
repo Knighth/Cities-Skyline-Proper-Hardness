@@ -142,8 +142,8 @@ namespace DifficultyMod
 
             var mapping = new Dictionary<Type, Type>
             {
-                {typeof (ResidentialBuildingAI), typeof (WBBResidentialBuildingAI6)},
-                {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI3)},
+                {typeof (ResidentialBuildingAI), typeof (WBBResidentialBuildingAI8)},
+                {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI5)},
                 {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI7)},
                 {typeof (OfficeBuildingAI), typeof (WBOfficeBuildingAI8)},
                 {typeof (IndustrialExtractorAI), typeof (WBIndustrialExtractorAI)},

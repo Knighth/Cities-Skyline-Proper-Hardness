@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 namespace DifficultyMod
 {
-    public class WBCommercialBuildingAI3 : CommercialBuildingAI
+    public class WBCommercialBuildingAI5 : CommercialBuildingAI
     {
         private FireSpread fs = new FireSpread();
         protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
@@ -32,7 +32,7 @@ namespace DifficultyMod
                 DistrictPolicies.Services servicePolicies = instance.m_districts.m_buffer[(int)district].m_servicePolicies;
                 DistrictPolicies.CityPlanning cityPlanningPolicies = instance.m_districts.m_buffer[(int)district].m_cityPlanningPolicies;
 
-                int baseIncome = CitizenHelper.GetBaseIncome(buildingData.Info.m_class.m_level,buildingData.Info.m_class.GetZone());
+                int baseIncome = CitizenHelper5.GetBaseIncome(buildingData.Info.m_class.m_level,buildingData.Info.m_class.GetZone());
                 if ((servicePolicies & DistrictPolicies.Services.Recycling) != DistrictPolicies.Services.None)
                 {
                     baseIncome = baseIncome * 95 / 100;
@@ -54,10 +54,13 @@ namespace DifficultyMod
                 }
 
                 int income = 0;
-                GetCitizenIncome(buildingID, ref buildingData, ref income);
+                int touristIncome = 0;
+                GetCitizenIncome(buildingID, ref buildingData, ref income,ref touristIncome);
 
-                income = (income * baseIncome + 9999) / 10000;
-                int percentage = 30;
+                income = (income * baseIncome + 99) / 100;
+                touristIncome = (touristIncome * baseIncome + 99) / 100;
+
+                int percentage = 100;
                 if (buildingData.m_electricityProblemTimer >= 1 || buildingData.m_waterProblemTimer >= 1 || buildingData.m_waterProblemTimer >= 1 || buildingData.m_garbageBuffer > 60000 || buildingData.m_outgoingProblemTimer >= 128 || buildingData.m_customBuffer1 == 0)
                 {
                     percentage = 0;
@@ -72,14 +75,24 @@ namespace DifficultyMod
                 }
 
                 income = (income * percentage + 99) / 100;
+                touristIncome = (touristIncome * percentage * 2 + 99) / 100;
+                var final = 0;
+                if ((income + touristIncome) > 0)
+                {
+                    final = Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.PrivateIncome, -(income + touristIncome), this.m_info.m_class, taxationPolicies);
+                }
                 if (income > 0)
                 {
-                    Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.PrivateIncome, -income, this.m_info.m_class, taxationPolicies);
+                    Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.CitizenIncome, (final * income) / (touristIncome + income), this.m_info.m_class);
+                }
+                if (touristIncome > 0)
+                {
+                    Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.TourismIncome, (final * touristIncome) / (touristIncome + income), this.m_info.m_class);
                 }
             }
         }
 
-        private void GetCitizenIncome(ushort buildingID, ref Building buildingData, ref int income)
+        private void GetCitizenIncome(ushort buildingID, ref Building buildingData, ref int income, ref int tourists)
         {
             CitizenManager instance = Singleton<CitizenManager>.instance;
             uint num = buildingData.m_citizenUnits;
@@ -88,7 +101,7 @@ namespace DifficultyMod
             {
                 if ((ushort)(instance.m_units.m_buffer[(int)((UIntPtr)num)].m_flags & CitizenUnit.Flags.Visit) != 0)
                 {
-                    CitizenHelper.GetCitizenIncome(instance.m_units.m_buffer[(int)((UIntPtr)num)], ref income);
+                    CitizenHelper5.GetCitizenIncome(instance.m_units.m_buffer[(int)((UIntPtr)num)], ref income,ref tourists);
                 }
                 num = instance.m_units.m_buffer[(int)((UIntPtr)num)].m_nextUnit;
                 if (++num2 > 524288)

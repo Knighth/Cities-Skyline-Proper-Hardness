@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DifficultyMod
 {
-    public class WBBResidentialBuildingAI6 : ResidentialBuildingAI
+    public class WBBResidentialBuildingAI8 : ResidentialBuildingAI
     {
         private FireSpread fs = new FireSpread();
 
@@ -57,7 +57,7 @@ namespace DifficultyMod
                 DistrictPolicies.Taxation taxationPolicies = instance.m_districts.m_buffer[(int)district].m_taxationPolicies;
                 DistrictPolicies.Services servicePolicies = instance.m_districts.m_buffer[(int)district].m_servicePolicies;
 
-                int baseIncome = CitizenHelper.GetBaseIncome(buildingData.Info.m_class.m_level, buildingData.Info.m_class.GetZone());
+                int baseIncome = CitizenHelper5.GetBaseIncome(buildingData.Info.m_class.m_level, buildingData.Info.m_class.GetZone());
                 if ((servicePolicies & DistrictPolicies.Services.Recycling) != DistrictPolicies.Services.None)
                 {
                     baseIncome = baseIncome * 95 / 100;
@@ -66,7 +66,7 @@ namespace DifficultyMod
                 int income = 0;
                 GetCitizenIncome(buildingID, ref buildingData, ref income);
 
-                income = (income * baseIncome + 9999) / 10000;
+                income = (income * baseIncome + 99) / 100;
                 int percentage = 100;
                 if (buildingData.m_electricityProblemTimer >= 1 || buildingData.m_waterProblemTimer >= 1 || buildingData.m_waterProblemTimer >= 1 || buildingData.m_garbageBuffer > 60000)
                 {
@@ -98,7 +98,7 @@ namespace DifficultyMod
             {
                 if ((ushort)(instance.m_units.m_buffer[(int)((UIntPtr)num)].m_flags & CitizenUnit.Flags.Home) != 0)
                 {
-                    CitizenHelper.GetCitizenIncome(instance.m_units.m_buffer[(int)((UIntPtr)num)], ref income);
+                    CitizenHelper5.GetCitizenIncome(instance.m_units.m_buffer[(int)((UIntPtr)num)], ref income);
                 }
                 num = instance.m_units.m_buffer[(int)((UIntPtr)num)].m_nextUnit;
                 if (++num2 > 524288)
