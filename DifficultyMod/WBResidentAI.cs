@@ -11,89 +11,35 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 namespace DifficultyMod
 {
-    public class WBResidentAI8 : ResidentAI
+    public class WBResidentAI4 : ResidentAI
     {
-        private static byte[] commuteHappinness = new byte[1048576];
-        private static byte[] commuteWait = new byte[1048576];
-        public static byte GetCommute(uint p)
-        {
-            return commuteHappinness[p];
-        }
-
-        private static void AddCommuteWait(uint citizen,int p)
-        {
-            commuteWait[citizen] = (byte)Mathf.Clamp((int)commuteWait[citizen] + p, 0, 255);
-        }
-
-        internal static void AddCommuteWait(Vehicle data, int p)
-        {
-            CitizenManager instance = Singleton<CitizenManager>.instance;
-            uint num = data.m_citizenUnits;
-            int num2 = 0;
-            while (num != 0u)
-            {
-                uint nextUnit = instance.m_units.m_buffer[num].m_nextUnit;
-                for (int i = 0; i < 5; i++)
-                {
-                    uint citizen = instance.m_units.m_buffer[num].GetCitizen(i);
-                    if (citizen != 0u)
-                    {
-                        AddCommuteWait(citizen,p);
-                    }
-                }
-                num = nextUnit;
-                if (++num2 > 524288)
-                {
-                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
-                    break;
-                }
-            }
-
-        }
-
-        
-
         protected override void ArriveAtDestination(ushort instanceID, ref CitizenInstance citizenData, bool success)
         {
-            uint citizenID = citizenData.m_citizen;
-            if (citizenID != 0)
+            uint citizen = citizenData.m_citizen;
+            if (citizen != 0)
             {
                 CitizenManager instance = Singleton<CitizenManager>.instance;
-                var citizen = instance.m_citizens.m_buffer[citizenID];
                 if (success)
                 {
-                    citizen.SetLocationByBuilding(citizenID, citizenData.m_targetBuilding);
-                    if (citizenData.m_sourceBuilding != 0 && instance.m_citizens.m_buffer[citizenID].CurrentLocation == Citizen.Location.Work)
+                    instance.m_citizens.m_buffer[citizen].SetLocationByBuilding(citizen, citizenData.m_targetBuilding);
+                    if (citizenData.m_sourceBuilding != 0 && instance.m_citizens.m_buffer[citizen].CurrentLocation == Citizen.Location.Work)
                     {
-                        ReachedDestination(citizenID,  citizenData);
-                        
+                        BuildingManager manager2 = Singleton<BuildingManager>.instance;
+                        BuildingInfo info = manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding].Info;
+                        int amountDelta = 50;
+                        info.m_buildingAI.ModifyMaterialBuffer(citizenData.m_sourceBuilding, ref manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
                     }
-                    else if (citizenData.m_sourceBuilding != 0 && instance.m_citizens.m_buffer[citizenID].CurrentLocation == Citizen.Location.Visit)
+                    else if (citizenData.m_sourceBuilding != 0 && instance.m_citizens.m_buffer[citizen].CurrentLocation == Citizen.Location.Visit)
                     {
-                        ReachedDestination(citizenID,  citizenData);
+                        BuildingManager manager2 = Singleton<BuildingManager>.instance;
+                        BuildingInfo info = manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding].Info;
+                        int amountDelta = 50;
+                        info.m_buildingAI.ModifyMaterialBuffer(citizenData.m_sourceBuilding, ref manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
                     }
                 }
             }
 
             base.ArriveAtDestination(instanceID, ref citizenData, success);
-        }
-
-        private void ReachedDestination(uint citizen, CitizenInstance citizenData)
-        {
-            BuildingManager manager2 = Singleton<BuildingManager>.instance;
-            BuildingInfo info = manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding].Info;
-            int amountDelta = 50;
-            info.m_buildingAI.ModifyMaterialBuffer(citizenData.m_sourceBuilding, ref manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
-            commuteHappinness[citizen] = (byte)Mathf.Clamp((int)(((int)commuteHappinness[citizen] * 2.0 + (int)commuteWait[citizen]) / 3.0), 0, 255);
-        }
-
-        private void StartJourney(uint citizen, Citizen data)
-        {
-            BuildingManager instance = Singleton<BuildingManager>.instance;
-            BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
-            int amountDelta = -50;
-            commuteWait[citizen] = 1;
-            instance.m_buildings.m_buffer[data.m_homeBuilding].Info.m_buildingAI.ModifyMaterialBuffer(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
         }
 
         public override void SimulationStep(uint citizenID, ref Citizen data)
@@ -117,40 +63,18 @@ namespace DifficultyMod
             }
         }
 
-        //public override void SimulationStep(ushort instanceID, ref CitizenInstance citizenData, ref CitizenInstance.Frame frameData, bool lodPhysics)
-        //{
-        //    base.SimulationStep(instanceID, ref citizenData, ref frameData, lodPhysics);
 
-        //    if ((citizenData.m_flags & CitizenInstance.Flags.WaitingTransport) != CitizenInstance.Flags.None && citizenData.m_waitCounter > 0)
-        //    {
-        //        if (Singleton<SimulationManager>.instance.m_randomizer.Int32(3) == 0)
-        //        {
-        //            citizenData.m_waitCounter = (byte)(citizenData.m_waitCounter - 1);
-        //        }
-        //    }
-        //}
         public override void SimulationStep(ushort instanceID, ref CitizenInstance citizenData, ref CitizenInstance.Frame frameData, bool lodPhysics)
         {
-            var oldWait = citizenData.m_waitCounter;
             base.SimulationStep(instanceID, ref citizenData, ref frameData, lodPhysics);
 
-            if (citizenData.m_waitCounter > oldWait)
+            if ((citizenData.m_flags & CitizenInstance.Flags.WaitingTransport) != CitizenInstance.Flags.None && citizenData.m_waitCounter > 0)
             {
-                if (Singleton<SimulationManager>.instance.m_randomizer.Int32(2) == 0)
+                if (Singleton<SimulationManager>.instance.m_randomizer.Int32(3) == 0)
                 {
-                    citizenData.m_waitCounter = oldWait;
-                }
-                else
-                {
-                    AddCommuteWait(citizenData.m_citizen, citizenData.m_waitCounter - oldWait);                    
+                    citizenData.m_waitCounter = (byte)(citizenData.m_waitCounter - 1);
                 }
             }
-        }
-
-        private void ReleaseCitizen(uint citizenID)
-        {
-            commuteHappinness[citizenID] = 0;
-            Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
         }
 
         private bool FindHospital(uint citizenID, ushort sourceBuilding, TransferManager.TransferReason reason)
@@ -161,7 +85,7 @@ namespace DifficultyMod
                 {
                     return true;
                 }
-                ReleaseCitizen(citizenID);
+                Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
                 return false;
             }
             if (Singleton<UnlockManager>.instance.Unlocked(ItemClass.Service.HealthCare))
@@ -177,7 +101,7 @@ namespace DifficultyMod
                 Singleton<TransferManager>.instance.AddOutgoingOffer(reason, offer);
                 return true;
             }
-            ReleaseCitizen(citizenID);
+            Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
             return false;
         }
 
@@ -285,7 +209,7 @@ namespace DifficultyMod
                 this.Die(citizenID, ref data);
                 if (Singleton<SimulationManager>.instance.m_randomizer.Int32(2) == 0)
                 {
-                    ReleaseCitizen(citizenID);
+                    Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
                     return true;
                 }
             }
@@ -446,7 +370,7 @@ namespace DifficultyMod
                         this.Die(citizenID, ref data);
                         if (Singleton<SimulationManager>.instance.m_randomizer.Int32(2) == 0)
                         {
-                            ReleaseCitizen(citizenID);
+                            Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
                             return true;
                         }
                     }
@@ -529,7 +453,7 @@ namespace DifficultyMod
         {
             if ((((data.m_homeBuilding == 0) && (data.m_workBuilding == 0)) && ((data.m_visitBuilding == 0) && (data.m_instance == 0))) && (data.m_vehicle == 0))
             {
-                ReleaseCitizen(citizenID);
+                Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
             }
             else
             {
@@ -542,7 +466,7 @@ namespace DifficultyMod
                             {
                                 if (data.m_homeBuilding == 0)
                                 {
-                                    ReleaseCitizen(citizenID);
+                                    Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
                                     return;
                                 }
                                 if (data.m_workBuilding != 0)
@@ -594,17 +518,19 @@ namespace DifficultyMod
                                         numChance = 80;
                                     }
                                     if ((((num < numChance) && (data.m_homeBuilding != 0)) && (data.m_instance == 0)) && (data.m_vehicle == 0))
-                                    {                                     
+                                    {
                                         if (base.StartMoving(citizenID, ref data, data.m_homeBuilding, data.m_workBuilding))
                                         {
-                                            StartJourney(citizenID, data);                                            
+                                            BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
+                                            int amountDelta = -50;
+                                            instance.m_buildings.m_buffer[data.m_homeBuilding].Info.m_buildingAI.ModifyMaterialBuffer(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
                                         }
                                     }
                                 }
                             }
                             break;
                         }
-                        ReleaseCitizen(citizenID);
+                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
                         return;
 
                     case Citizen.Location.Work:
@@ -681,7 +607,7 @@ namespace DifficultyMod
                             }
                             return;
                         }
-                        ReleaseCitizen(citizenID);
+                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
                         return;
 
                     case Citizen.Location.Visit:
@@ -742,7 +668,7 @@ namespace DifficultyMod
                             }
                             return;
                         }
-                        ReleaseCitizen(citizenID);
+                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
                         return;
 
                     case Citizen.Location.Moving:
@@ -774,7 +700,7 @@ namespace DifficultyMod
                             }
                             break;
                         }
-                        ReleaseCitizen(citizenID);
+                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
                         return;
                 }
                 data.m_flags &= ~Citizen.Flags.NeedGoods;
@@ -846,7 +772,7 @@ namespace DifficultyMod
                     data.SetHome(citizenID, offer.Building, 0u);
                     if (data.m_homeBuilding == 0)
                     {
-                        ReleaseCitizen(citizenID);
+                        Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
                     }
                     return;
                 case TransferManager.TransferReason.PartnerYoung:
@@ -880,7 +806,10 @@ namespace DifficultyMod
                 case TransferManager.TransferReason.ShoppingH:
                     if (data.m_homeBuilding != 0 && !data.Sick && base.StartMoving(citizenID, ref data, 0, offer.Building))
                     {
-                        StartJourney(citizenID, data);
+                        BuildingManager instance = Singleton<BuildingManager>.instance;
+                        BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
+                        int amountDelta = -50;
+                        instance.m_buildings.m_buffer[data.m_homeBuilding].Info.m_buildingAI.ModifyMaterialBuffer(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
 
                         data.SetVisitplace(citizenID, offer.Building, 0u);
                         CitizenManager instance3 = Singleton<CitizenManager>.instance;
@@ -1006,8 +935,6 @@ namespace DifficultyMod
                 int num24;
                 bool flag;
                 int num = 0;
-
-                //num -= commuteHappinness[citizenID] / 2;
                 BuildingManager instance = Singleton<BuildingManager>.instance;
                 BuildingInfo info = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
                 Vector3 position = instance.m_buildings.m_buffer[data.m_homeBuilding].m_position;
@@ -1196,7 +1123,7 @@ namespace DifficultyMod
                     if (data.m_workBuilding == 0)
                     {
                         int unemployed = data.Unemployed;
-                        num -= (unemployed * workRequirement) / 50;
+                        num -= (unemployed * workRequirement) / 100;
                         if (Singleton<UnlockManager>.instance.Unlocked(ItemClass.Service.PoliceDepartment))
                         {
                             data.Unemployed = unemployed + 1;
@@ -1304,7 +1231,7 @@ namespace DifficultyMod
             {
                 CitizenManager instance = Singleton<CitizenManager>.instance;
                 VehicleManager instance2 = Singleton<VehicleManager>.instance;
-                ushort vehicle = instance.m_citizens.m_buffer[(int)((uint)((UIntPtr)citizenData.m_citizen))].m_vehicle;
+                ushort vehicle = instance.m_citizens.m_buffer[(int)((UIntPtr)citizenData.m_citizen)].m_vehicle;
                 if (vehicle != 0)
                 {
                     VehicleInfo info = instance2.m_vehicles.m_buffer[(int)vehicle].Info;
@@ -1315,85 +1242,36 @@ namespace DifficultyMod
                     }
                     else
                     {
-                        instance.m_citizens.m_buffer[(int)((uint)((UIntPtr)citizenData.m_citizen))].SetVehicle(citizenData.m_citizen, 0, 0u);
+                        instance.m_citizens.m_buffer[(int)((UIntPtr)citizenData.m_citizen)].SetVehicle(citizenData.m_citizen, 0, 0u);
                     }
                     return false;
                 }
             }
-            if (citizenData.m_targetBuilding == 0)
+            if (citizenData.m_targetBuilding != 0)
             {
-                return false;
-            }
-            VehicleInfo vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, false);
-            BuildingManager instance3 = Singleton<BuildingManager>.instance;
-            BuildingInfo info2 = instance3.m_buildings.m_buffer[(int)citizenData.m_targetBuilding].Info;
-            Randomizer randomizer = new Randomizer((int)instanceID << 8 | (int)citizenData.m_targetSeed);
-            Vector3 vector;
-            Vector3 endPos;
-            Vector2 vector2;
-            CitizenInstance.Flags flags;
-            info2.m_buildingAI.CalculateUnspawnPosition(citizenData.m_targetBuilding, ref instance3.m_buildings.m_buffer[(int)citizenData.m_targetBuilding], ref randomizer, this.m_info, instanceID, out vector, out endPos, out vector2, out flags);
-            if (!base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo))
-            {
-                if (vehicleInfo == null)
+                VehicleInfo vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, false);
+                BuildingManager instance3 = Singleton<BuildingManager>.instance;
+                BuildingInfo info2 = instance3.m_buildings.m_buffer[(int)citizenData.m_targetBuilding].Info;
+                Randomizer randomizer = new Randomizer((int)instanceID << 8 | (int)citizenData.m_targetSeed);
+                Vector3 vector;
+                Vector3 endPos;
+                Vector2 vector2;
+                CitizenInstance.Flags flags;
+                info2.m_buildingAI.CalculateUnspawnPosition(citizenData.m_targetBuilding, ref instance3.m_buildings.m_buffer[(int)citizenData.m_targetBuilding], ref randomizer, this.m_info, instanceID, out vector, out endPos, out vector2, out flags);
+                if (!base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo) && vehicleInfo == null)
                 {
-                    vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, true);
-                    return base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo);
+                    vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, true);                    
+                    var result = base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo);
+                    return result;
                 }
                 else
                 {
-                    return false;
+                    return true;
                 }
             }
-            else
-            {
-                return true;
-            }
+            return false;
         }
 
-        //protected override VehicleInfo GetVehicleInfo(ushort instanceID, ref CitizenInstance citizenData, bool forceProbability)
-        //{
-        //    if (citizenData.m_citizen == 0u)
-        //    {
-        //        return null;
-        //    }
-        //    int age = Singleton<CitizenManager>.instance.m_citizens.m_buffer[(int)citizenData.m_citizen].Age;
-        //    int num;
-        //    if (forceProbability || (citizenData.m_flags & CitizenInstance.Flags.BorrowCar) != CitizenInstance.Flags.None)
-        //    {
-        //        num = 100;
-        //    }
-        //    else
-        //    {
-        //        num = this.GetCarProbability(Citizen.GetAgeGroup(age));
-        //    }
-
-        //    Randomizer randomizer = new Randomizer(citizenData.m_citizen);
-        //    if (randomizer.Int32(100u) < num)
-        //    {
-        //        return Singleton<VehicleManager>.instance.GetRandomVehicleInfo(ref randomizer, ItemClass.Service.Residential, ItemClass.SubService.ResidentialLow, ItemClass.Level.Level1);
-        //    }
-        //    return null;
-        //}
-
-        //private int GetCarProbability(Citizen.AgeGroup ageGroup)
-        //{
-        //    switch (ageGroup)
-        //    {
-        //        case Citizen.AgeGroup.Child:
-        //            return 0;
-        //        case Citizen.AgeGroup.Teen:
-        //            return 5;
-        //        case Citizen.AgeGroup.Young:
-        //            return 20;
-        //        case Citizen.AgeGroup.Adult:
-        //            return 25;
-        //        case Citizen.AgeGroup.Senior:
-        //            return 5;
-        //        default:
-        //            return 0;
-        //    }
-        //}
 
     }
 

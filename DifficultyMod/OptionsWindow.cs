@@ -152,7 +152,7 @@ namespace DifficultyMod
             data.disastersEnabled = disastersCheck.IsChecked;
             SaveData2.WriteData(data);
             this.Hide();
-            LoadingExtension7.LoadMod(this.mode,data);
+            LoadingExtension8.LoadMod(this.mode,data);
         }
 
     }

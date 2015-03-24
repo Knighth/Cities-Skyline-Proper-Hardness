@@ -29,7 +29,7 @@ namespace DifficultyMod
         }
     }
 
-    public class LoadingExtension7 : LoadingExtensionBase
+    public class LoadingExtension8 : LoadingExtensionBase
     {
         static GameObject modGameObject;
         OptionsWindow2 optionsWindow;
@@ -184,7 +184,7 @@ namespace DifficultyMod
             }
             mapping = new Dictionary<Type, Type>
             {
-                {typeof (ResidentAI), typeof (WBResidentAI8)},
+                {typeof (ResidentAI), typeof (WBResidentAI4)},
             };
 
 

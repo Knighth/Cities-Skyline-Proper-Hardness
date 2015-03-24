@@ -272,15 +272,15 @@ namespace DifficultyMod
 
         public static void GetCommute(uint citizenID, Citizen cit, ref int commute, ref int count)
         {
-            var ageGroup = Citizen.GetAgeGroup(cit.m_age);
-            if (!cit.Dead)
-            {
-                var comm =  WBResidentAI8.GetCommute(citizenID);
-                if (comm > 0){
-                    commute += comm;
-                    count += 1;
-                }
-            }
+        //    var ageGroup = Citizen.GetAgeGroup(cit.m_age);
+        //    if (!cit.Dead)
+        //    {
+        //        var comm =  WBResidentAI4.GetCommute(citizenID);
+        //        if (comm > 0){
+        //            commute += comm;
+        //            count += 1;
+        //        }
+        //    }
         }
 
         public static int GetServiceThreshhold(ItemClass.Level level, ItemClass.Zone zone)
