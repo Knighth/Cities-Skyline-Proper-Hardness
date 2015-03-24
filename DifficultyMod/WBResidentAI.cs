@@ -13,6 +13,44 @@ namespace DifficultyMod
 {
     public class WBResidentAI4 : ResidentAI
     {
+        private static byte[] commuteHappinness = new byte[1048576];
+        private static byte[] commuteWait = new byte[1048576];
+        public static byte GetCommute(uint p)
+        {
+            return commuteHappinness[p];
+        }
+
+        private static void AddCommuteWait(uint citizen,int p)
+        {
+            commuteWait[citizen] = (byte)Mathf.Clamp((int)commuteWait[citizen] + p, 0, 255);
+        }
+
+        internal static void AddCommuteWait(Vehicle data, int p)
+        {
+            CitizenManager instance = Singleton<CitizenManager>.instance;
+            uint num = data.m_citizenUnits;
+            int num2 = 0;
+            while (num != 0u)
+            {
+                uint nextUnit = instance.m_units.m_buffer[num].m_nextUnit;
+                for (int i = 0; i < 5; i++)
+                {
+                    uint citizen = instance.m_units.m_buffer[num].GetCitizen(i);
+                    if (citizen != 0u)
+                    {
+                        AddCommuteWait(citizen,p);
+                    }
+                }
+                num = nextUnit;
+                if (++num2 > 524288)
+                {
+                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                    break;
+                }
+            }
+
+        }
+
         protected override void ArriveAtDestination(ushort instanceID, ref CitizenInstance citizenData, bool success)
         {
             uint citizen = citizenData.m_citizen;
@@ -24,22 +62,33 @@ namespace DifficultyMod
                     instance.m_citizens.m_buffer[citizen].SetLocationByBuilding(citizen, citizenData.m_targetBuilding);
                     if (citizenData.m_sourceBuilding != 0 && instance.m_citizens.m_buffer[citizen].CurrentLocation == Citizen.Location.Work)
                     {
-                        BuildingManager manager2 = Singleton<BuildingManager>.instance;
-                        BuildingInfo info = manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding].Info;
-                        int amountDelta = 50;
-                        info.m_buildingAI.ModifyMaterialBuffer(citizenData.m_sourceBuilding, ref manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
+                        ReachedDestination(citizen, citizenData);
                     }
                     else if (citizenData.m_sourceBuilding != 0 && instance.m_citizens.m_buffer[citizen].CurrentLocation == Citizen.Location.Visit)
                     {
-                        BuildingManager manager2 = Singleton<BuildingManager>.instance;
-                        BuildingInfo info = manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding].Info;
-                        int amountDelta = 50;
-                        info.m_buildingAI.ModifyMaterialBuffer(citizenData.m_sourceBuilding, ref manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
+                        ReachedDestination(citizen, citizenData);                        
                     }
                 }
             }
 
             base.ArriveAtDestination(instanceID, ref citizenData, success);
+        }
+
+        protected void ReachedDestination(uint citizen, CitizenInstance citizenData)
+        {
+            BuildingManager manager2 = Singleton<BuildingManager>.instance;
+            BuildingInfo info = manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding].Info;
+            int amountDelta = 50;
+            info.m_buildingAI.ModifyMaterialBuffer(citizenData.m_sourceBuilding, ref manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
+            commuteHappinness[citizen] = (byte)Mathf.Clamp((int)(((int)commuteHappinness[citizen] * 2.0 + (int)commuteWait[citizen]) / 3.0), 0, 255);
+        }
+
+        protected void StartJourney(uint citizen, Citizen data)
+        {
+            BuildingManager instance = Singleton<BuildingManager>.instance;
+            BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
+            int amountDelta = -50;
+            instance.m_buildings.m_buffer[data.m_homeBuilding].Info.m_buildingAI.ModifyMaterialBuffer(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
         }
 
         public override void SimulationStep(uint citizenID, ref Citizen data)
@@ -521,9 +570,8 @@ namespace DifficultyMod
                                     {
                                         if (base.StartMoving(citizenID, ref data, data.m_homeBuilding, data.m_workBuilding))
                                         {
-                                            BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
-                                            int amountDelta = -50;
-                                            instance.m_buildings.m_buffer[data.m_homeBuilding].Info.m_buildingAI.ModifyMaterialBuffer(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
+                                            StartJourney(citizenID, data);
+                                            
                                         }
                                     }
                                 }
@@ -806,11 +854,7 @@ namespace DifficultyMod
                 case TransferManager.TransferReason.ShoppingH:
                     if (data.m_homeBuilding != 0 && !data.Sick && base.StartMoving(citizenID, ref data, 0, offer.Building))
                     {
-                        BuildingManager instance = Singleton<BuildingManager>.instance;
-                        BuildingInfo homeInfo = instance.m_buildings.m_buffer[data.m_homeBuilding].Info;
-                        int amountDelta = -50;
-                        instance.m_buildings.m_buffer[data.m_homeBuilding].Info.m_buildingAI.ModifyMaterialBuffer(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
-
+                        StartJourney(citizenID, data);
                         data.SetVisitplace(citizenID, offer.Building, 0u);
                         CitizenManager instance3 = Singleton<CitizenManager>.instance;
                         BuildingManager instance4 = Singleton<BuildingManager>.instance;
@@ -1258,11 +1302,18 @@ namespace DifficultyMod
                 Vector2 vector2;
                 CitizenInstance.Flags flags;
                 info2.m_buildingAI.CalculateUnspawnPosition(citizenData.m_targetBuilding, ref instance3.m_buildings.m_buffer[(int)citizenData.m_targetBuilding], ref randomizer, this.m_info, instanceID, out vector, out endPos, out vector2, out flags);
-                if (!base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo) && vehicleInfo == null)
+                if (!base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo))
                 {
-                    vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, true);                    
-                    var result = base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo);
-                    return result;
+                    if (vehicleInfo == null)
+                    {
+                        vehicleInfo = base.GetVehicleInfo(instanceID, ref citizenData, true);
+                        var result = base.StartPathFind(instanceID, ref citizenData, citizenData.m_targetPos, endPos, vehicleInfo);
+                        return result;
+                    }
+                    else
+                    {
+                        return false;
+                    }                    
                 }
                 else
                 {
