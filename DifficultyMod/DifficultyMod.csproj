@@ -53,20 +53,21 @@
   <ItemGroup>
     <Compile Include="FireSpread.cs" />
     <Compile Include="Disasters.cs" />
+    <Compile Include="Helpers\LevelUpHelper.cs" />
     <Compile Include="ModdingAPI.cs" />
-    <Compile Include="BuildingInfoWindow.cs" />
-    <Compile Include="OptionsWindow.cs" />
+    <Compile Include="panels\BuildingInfoWindow.cs" />
+    <Compile Include="panels\OptionsWindow.cs" />
     <Compile Include="SaveData.cs" />
     <Compile Include="TransportLineAI.cs" />
-    <Compile Include="CitizenHelper.cs" />
-    <Compile Include="WBIndustrialExtractorAI.cs" />
-    <Compile Include="WBOfficeBuildingAI.cs" />
-    <Compile Include="WBResidentAI.cs" />
-    <Compile Include="WBIndustrialBuildingAI.cs" />
-    <Compile Include="WBCommercialBuildignAI.cs" />
-    <Compile Include="WBResidentialBuildingAI.cs" />
-    <Compile Include="WBPassengerCarAI.cs" />
-    <Compile Include="WBCargoTruckAI.cs" />
+    <Compile Include="Helpers\CitizenHelper.cs" />
+    <Compile Include="extensions\WBIndustrialExtractorAI.cs" />
+    <Compile Include="extensions\WBOfficeBuildingAI.cs" />
+    <Compile Include="extensions\WBResidentAI.cs" />
+    <Compile Include="extensions\WBIndustrialBuildingAI.cs" />
+    <Compile Include="extensions\WBCommercialBuildignAI.cs" />
+    <Compile Include="extensions\WBResidentialBuildingAI.cs" />
+    <Compile Include="extensions\WBPassengerCarAI.cs" />
+    <Compile Include="extensions\WBCargoTruckAI.cs" />
     <Compile Include="DifficultyMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -77,9 +78,7 @@
   <PropertyGroup>
     <PostBuildEvent>mkdir "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"
 del "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)\$(TargetFileName)"
-xcopy /y "$(TargetPath)" "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"
-"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin\NETFX 4.0 Tools\x64\gacutil.exe" /u "DifficultyMod, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
-"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin\NETFX 4.0 Tools\x64\gacutil.exe" /l</PostBuildEvent>
+xcopy /y "$(TargetPath)" "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DifficultyMod
 {
-    public class WBBResidentialBuildingAI8 : ResidentialBuildingAI
+    public class WBBResidentialBuildingAI2 : ResidentialBuildingAI
     {
         private FireSpread fs = new FireSpread();
 
@@ -47,64 +47,20 @@ namespace DifficultyMod
 
             if ((buildingData.m_flags & Building.Flags.BurnedDown) != Building.Flags.None || (buildingData.m_flags & Building.Flags.Abandoned) != Building.Flags.None)
             {
-                float radius = (float)(buildingData.Width + buildingData.Length) * 15.0f;
+                float radius = (float)(buildingData.Width + buildingData.Length) * 25.0f;
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Abandonment, 40, buildingData.m_position, radius);
             }
             else if (buildingData.m_fireIntensity == 0)
             {
+                int income = 0;
+                int tourists = 0;
+                CitizenHelper.instance.GetIncome(buildingID, buildingData, ref income, ref tourists);
                 DistrictManager instance = Singleton<DistrictManager>.instance;
                 byte district = instance.GetDistrict(buildingData.m_position);
                 DistrictPolicies.Taxation taxationPolicies = instance.m_districts.m_buffer[(int)district].m_taxationPolicies;
-                DistrictPolicies.Services servicePolicies = instance.m_districts.m_buffer[(int)district].m_servicePolicies;
-
-                int baseIncome = CitizenHelper5.GetBaseIncome(buildingData.Info.m_class.m_level, buildingData.Info.m_class.GetZone());
-                if ((servicePolicies & DistrictPolicies.Services.Recycling) != DistrictPolicies.Services.None)
-                {
-                    baseIncome = baseIncome * 95 / 100;
-                }
-
-                int income = 0;
-                GetCitizenIncome(buildingID, ref buildingData, ref income);
-
-                income = (income * baseIncome + 99) / 100;
-                int percentage = 100;
-                if (buildingData.m_electricityProblemTimer >= 1 || buildingData.m_waterProblemTimer >= 1 || buildingData.m_waterProblemTimer >= 1 || buildingData.m_garbageBuffer > 60000)
-                {
-                    percentage = 0;
-                }
-                if (this.CanSufferFromFlood())
-                {
-                    float num18 = Singleton<TerrainManager>.instance.WaterLevel(VectorUtils.XZ(buildingData.m_position));
-                    if (num18 > buildingData.m_position.y)
-                    {
-                        percentage = 0;
-                    }
-                }
-                
-                income = (income * percentage + 99) / 100;
                 if (income > 0)
                 {
                     Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.PrivateIncome, -income, this.m_info.m_class, taxationPolicies);
-                }
-            }
-        }
-
-        private void GetCitizenIncome(ushort buildingID, ref Building buildingData, ref int income)
-        {
-            CitizenManager instance = Singleton<CitizenManager>.instance;
-            uint num = buildingData.m_citizenUnits;
-            int num2 = 0;
-            while (num != 0u)
-            {
-                if ((ushort)(instance.m_units.m_buffer[(int)((UIntPtr)num)].m_flags & CitizenUnit.Flags.Home) != 0)
-                {
-                    CitizenHelper5.GetCitizenIncome(instance.m_units.m_buffer[(int)((UIntPtr)num)], ref income);
-                }
-                num = instance.m_units.m_buffer[(int)((UIntPtr)num)].m_nextUnit;
-                if (++num2 > 524288)
-                {
-                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
-                    break;
                 }
             }
         }
@@ -120,7 +76,7 @@ namespace DifficultyMod
                     {
                         if (data.m_customBuffer1 == 0)
                         {
-                            data.m_customBuffer1 = (ushort)(120 + WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level - 1, data.Info.m_class.GetZone()));
+                            data.m_customBuffer1 = (ushort)(120 + LevelUpHelper3.instance.GetWealthThreshhold(data.Info.m_class.m_level - 1, data.Info.m_class.GetZone()));
                         }
 
                         if (amountDelta > 0)
@@ -201,7 +157,7 @@ namespace DifficultyMod
             {
                 return 0f;
             }
-            float result = WBLevelUp9.GetEventImpact(buildingID, data, resource, amount);
+            float result = LevelUpHelper3.instance.GetEventImpact(buildingID, data, resource, amount);
             if (result != 0)
             {
                 return result;

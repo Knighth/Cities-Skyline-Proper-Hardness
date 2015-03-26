@@ -37,6 +37,8 @@ namespace DifficultyMod
         UILabel happyLabel;
         UIProgressBar happyBar;
 
+        UILabel incomeLabel;
+
         public ZonedBuildingWorldInfoPanel baseBuildingWindow;
         FieldInfo baseSub;
 
@@ -83,6 +85,8 @@ namespace DifficultyMod
             
             happyLabel = AddUIComponent<UILabel>();
             happyBar = AddUIComponent<UIProgressBar>();
+
+            incomeLabel = AddUIComponent<UILabel>();
             base.Awake();
 
         }
@@ -137,11 +141,12 @@ namespace DifficultyMod
             base.Start();
             
             barWidth = this.size.x - 28;
-            float x = 14;
             float y = 70;
 
             SetLabel(serviceLabel, "Service Progress");
             SetBar(serviceBar);
+            serviceBar.tooltip = "Progress until next level, combined score of factors shown above.";
+            serviceLabel.tooltip = "Progress until next level, combined score of factors shown above.";
             y += vertPadding;
 
             SetLabel(wealthLabel, "Wealth Progress");
@@ -150,17 +155,27 @@ namespace DifficultyMod
 
             SetLabel(educationLabel, "Education Progress");
             SetBar(educationBar);
+            educationBar.tooltip = "Progress until next level, educate more cims to increase.";
+            educationLabel.tooltip = "Progress until next level, educate more cims to increase.";
             y += vertPadding;
 
-            SetLabel(waitLabel, "Commute Time");
+            SetLabel(waitLabel, "Idle Commute Time");
             SetBar(commuteWaitTimeBar);
             commuteWaitTimeBar.tooltip = "Average time cims spend waiting (for public transport or stopped in traffic), affects their happiness.";
+            waitLabel.tooltip = "Average time cims spend waiting (for public transport or stopped in traffic), affects their happiness.";
             commuteWaitTimeBar.progressColor = Color.red;
+
             y += vertPadding;
 
             SetLabel(happyLabel, "Happiness");
             SetBar(happyBar);
+            happyBar.tooltip = "Average happiness, affects amount of tax paid.";
+            happyLabel.tooltip = "Average happiness, affects amount of tax paid.";
+            happyBar.size = new Vector2(barWidth - 260, 16);
 
+
+            SetLabel(incomeLabel, "Tax Income:");
+            incomeLabel.tooltip = "Total building tax income.";
             y += vertPadding;
             height = y;
         }
@@ -217,6 +232,7 @@ namespace DifficultyMod
 
         private void UpdateBuildingInfo(ushort buildingId, Building building)
         {
+            var levelUpHelper = LevelUpHelper3.instance;
             var info = building.Info;
             var zone = info.m_class.GetZone();
             Building data = Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)buildingId];
@@ -227,23 +243,23 @@ namespace DifficultyMod
             double totalNegativeFactor = 0;
             foreach (var resBar in this.resourceBars)
             {
-                if (WBLevelUp9.GetFactor(zone, resBar.Key) > 0)
+                if (levelUpHelper.GetFactor(zone, resBar.Key) > 0)
                 {
-                    totalFactor += WBLevelUp9.GetFactor(zone, resBar.Key);
+                    totalFactor += levelUpHelper.GetFactor(zone, resBar.Key);
                 }
                 else
                 {
-                    totalNegativeFactor -= WBLevelUp9.GetFactor(zone, resBar.Key);
+                    totalNegativeFactor -= levelUpHelper.GetFactor(zone, resBar.Key);
                 }
             }
-            totalNegativeFactor -= WBLevelUp9.GetPollutionFactor(zone);
+            totalNegativeFactor -= levelUpHelper.GetPollutionFactor(zone);
 
             var x = 14f;
             var negativeX = 14f;
             foreach (var resBar in this.resourceBars)
             {
                 var label = this.resourceLabels[resBar.Key];
-                var factor = WBLevelUp9.GetFactor(zone, resBar.Key);
+                var factor = levelUpHelper.GetFactor(zone, resBar.Key);
                 if (factor == 0)
                 {
                     label.Hide();
@@ -253,7 +269,7 @@ namespace DifficultyMod
                 {
                     label.Show();
                     resBar.Value.Show();
-                    var value = WBLevelUp9.GetServiceScore(resBar.Key, zone, array, num);
+                    var value = levelUpHelper.GetServiceScore(resBar.Key, zone, array, num);
 
                     if (factor > 0)
                     {
@@ -275,10 +291,10 @@ namespace DifficultyMod
                 }
             }
 
-            if (WBLevelUp9.GetPollutionFactor(zone) < 0)
+            if (levelUpHelper.GetPollutionFactor(zone) < 0)
             {
-                var value = WBLevelUp9.GetPollutionScore(data, zone);
-                var factor = WBLevelUp9.GetPollutionFactor(zone);
+                var value = levelUpHelper.GetPollutionScore(data, zone);
+                var factor = levelUpHelper.GetPollutionFactor(zone);
 
                 pollutionBar.size = new Vector2((float)(barWidth * -factor / totalNegativeFactor), 16);
                 pollutionLabel.relativePosition = new Vector3(negativeX, 56);
@@ -296,15 +312,15 @@ namespace DifficultyMod
             }
 
             x = 14f;
-            float y = 70f;            
-            SetProgress(serviceBar,WBLevelUp9.GetProperServiceScore(buildingId), WBLevelUp9.GetServiceThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)),zone),WBLevelUp9.GetServiceThreshhold(data.Info.m_class.m_level,zone));
+            float y = 70f;
+            SetProgress(serviceBar, levelUpHelper.GetProperServiceScore(buildingId), levelUpHelper.GetServiceThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), levelUpHelper.GetServiceThreshhold(data.Info.m_class.m_level, zone));
             SetPos(serviceLabel, serviceBar, x, y,true);
             y += vertPadding;
 
             float education;
             float happy;
             float commute;
-            WBLevelUp9.GetEducationHappyScore(buildingId,out education,out happy,out commute);
+            levelUpHelper.GetEducationHappyScore(buildingId, out education, out happy, out commute);
 
             if (zone == ItemClass.Zone.CommercialHigh || zone == ItemClass.Zone.CommercialLow)
             {
@@ -312,7 +328,7 @@ namespace DifficultyMod
             }
             else
             {
-                SetProgress(educationBar, education, WBLevelUp9.GetEducationThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp9.GetEducationThreshhold(data.Info.m_class.m_level, zone));
+                SetProgress(educationBar, education, levelUpHelper.GetEducationThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), levelUpHelper.GetEducationThreshhold(data.Info.m_class.m_level, zone));
                 SetPos(educationLabel, educationBar, x, y, true);
                 y += vertPadding;
             }
@@ -320,15 +336,19 @@ namespace DifficultyMod
 
             if (zone == ItemClass.Zone.ResidentialHigh || zone == ItemClass.Zone.ResidentialLow)
             {
-                SetProgress(wealthBar, data.m_customBuffer1, WBLevelUp9.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level, zone));
+                SetProgress(wealthBar, data.m_customBuffer1, levelUpHelper.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), levelUpHelper.GetWealthThreshhold(data.Info.m_class.m_level, zone));
                 SetPos(wealthLabel, wealthBar, x, y, true);
+                wealthBar.tooltip = "Progress until next level, increases when cims reach work or shops.";
+                wealthLabel.tooltip = "Progress until next level, increases when cims reach work or shops.";
                 y += vertPadding;
             }
             else if (zone == ItemClass.Zone.CommercialHigh || zone == ItemClass.Zone.CommercialLow)
             {
 
-                SetProgress(wealthBar, education, WBLevelUp9.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), WBLevelUp9.GetWealthThreshhold(data.Info.m_class.m_level, zone));
+                SetProgress(wealthBar, education, levelUpHelper.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), levelUpHelper.GetWealthThreshhold(data.Info.m_class.m_level, zone));
                 SetPos(wealthLabel, wealthBar, x, y, true);
+                wealthBar.tooltip = "Progress until next level, increases when wealthier cims shop here.";
+                wealthLabel.tooltip = "Progress until next level, increases when wealthier cims shop here.";
                 y += vertPadding;
             }
             else
@@ -339,13 +359,19 @@ namespace DifficultyMod
 
             SetProgress(happyBar, happy, 0, 100);
             SetPos(happyLabel, happyBar, x, y, true);
+            incomeLabel.relativePosition = new Vector3(barWidth - 90, y);
+
             y += vertPadding;
 
             SetProgress(commuteWaitTimeBar, commute, 0, 100);            
             SetPos(waitLabel, commuteWaitTimeBar, x, y, true);
             y += vertPadding;
 
-            
+            int income = 0;
+            int tourists = 0;
+            CitizenHelper.instance.GetIncome(buildingId, data,ref income,ref tourists);
+
+            incomeLabel.text = "Tax Income: " + ((income + tourists) / 100.0).ToString("0.00");
             height = y;
         }
 

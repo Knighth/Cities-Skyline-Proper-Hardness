@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace DifficultyMod
 {
-    public class DifficultyMod : IUserMod
+    public class DifficultyMod2 : IUserMod
     {
         public string Name
         {
@@ -29,11 +29,13 @@ namespace DifficultyMod
         }
     }
 
-    public class LoadingExtension8 : LoadingExtensionBase
+    public class LoadingExtension : LoadingExtensionBase
     {
         static GameObject modGameObject;
-        OptionsWindow2 optionsWindow;
+        static GameObject buildingWindowGameObject;
+        OptionsWindow optionsWindow;
         BuildingInfoWindow buildingWindow;
+        private LoadMode _mode;
 
         private Dictionary<GameObject, bool> FindSceneRoots()
         {
@@ -80,56 +82,51 @@ namespace DifficultyMod
         {
             if (mode != LoadMode.LoadGame && mode != LoadMode.NewGame)
                 return;
+            _mode = mode;
 
             SaveData2.ResetData();
-            modGameObject = new GameObject("Difficulty Mod");
-
-            var view = UIView.GetAView();
-            //var objects = GameObject.Find("ZonedBuildingWorldInfoPanel");
-            //if (objects != null)
-            //{
-            //    DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, objects.name + " " + objects.GetType().Name);
-            //}
-           
+            modGameObject = new GameObject("DifficultyMod");
+            buildingWindowGameObject = new GameObject("BuildingWindow");
 
             var buildingInfo = UIView.Find<UIPanel>("(Library) ZonedBuildingWorldInfoPanel");
-            //DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, .name);
-            
-            
-            this.buildingWindow = modGameObject.AddComponent<BuildingInfoWindow>();
+            this.buildingWindow = buildingWindowGameObject.AddComponent<BuildingInfoWindow>();
             this.buildingWindow.transform.parent = buildingInfo.transform;
-            this.buildingWindow.size = new Vector3(buildingInfo.size.x,buildingInfo.size.y);
-            this.buildingWindow.baseBuildingWindow = buildingInfo.gameObject.transform.GetComponentInChildren<ZonedBuildingWorldInfoPanel>();
+            this.buildingWindow.size = new Vector3(buildingInfo.size.x, buildingInfo.size.y);
+            this.buildingWindow.baseBuildingWindow =  buildingInfo.gameObject.transform.GetComponentInChildren<ZonedBuildingWorldInfoPanel>();
+            this.buildingWindow.position = new Vector3(0, -20);
 
-            
-            buildingInfo.eventPositionChanged += (component, param) =>
-            {
-                this.buildingWindow.position = new Vector3(0, -10);// new Vector3(component.position.x, component.position.y + component.size.y - 10);
-                this.buildingWindow.Update();
-            };
+            //buildingInfo.eventPositionChanged += (component, param) =>
+            //{
+            //    
+            //    this.buildingWindow.Update();
+            //};
 
-            buildingInfo.eventVisibilityChanged += (component, param) =>
-            {
-                this.buildingWindow.isEnabled = param;
-                if (param)
-                {
-                    this.buildingWindow.Show();
-                }
-                else
-                {
-                    this.buildingWindow.Hide();
-                }
-            };
+            buildingInfo.eventVisibilityChanged += buildingInfo_eventVisibilityChanged;
 
             if (SaveData2.MustInitialize())
             {
-                this.optionsWindow = modGameObject.AddComponent<OptionsWindow2>();
+                var view = UIView.GetAView();
+                this.optionsWindow = modGameObject.AddComponent<OptionsWindow>();
                 this.optionsWindow.transform.parent = view.transform;
                 this.optionsWindow.mode = mode;
             }
             else
             {
-                LoadMod(mode,SaveData2.saveData);
+                LoadMod(mode, SaveData2.saveData);
+            }
+
+        }
+
+        void buildingInfo_eventVisibilityChanged(UIComponent component, bool value)
+        {
+            this.buildingWindow.isEnabled = value;
+            if (value)
+            {
+                this.buildingWindow.Show();
+            }
+            else
+            {
+                this.buildingWindow.Hide();
             }
         }
 
@@ -142,10 +139,10 @@ namespace DifficultyMod
 
             var mapping = new Dictionary<Type, Type>
             {
-                {typeof (ResidentialBuildingAI), typeof (WBBResidentialBuildingAI8)},
-                {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI5)},
-                {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI7)},
-                {typeof (OfficeBuildingAI), typeof (WBOfficeBuildingAI8)},
+                {typeof (ResidentialBuildingAI), typeof (WBBResidentialBuildingAI2)},
+                {typeof (CommercialBuildingAI), typeof (WBCommercialBuildingAI2)},
+                {typeof (IndustrialBuildingAI), typeof (WBIndustrialBuildingAI2)},
+                {typeof (OfficeBuildingAI), typeof (WBOfficeBuildingAI2)},
                 {typeof (IndustrialExtractorAI), typeof (WBIndustrialExtractorAI)},
 
             };
@@ -363,11 +360,27 @@ namespace DifficultyMod
                 bf.SetValue(b, kvp.Value);
             }
         }
-
-        public override void OnReleased()
+        public override void OnLevelUnloading()
         {
-            base.OnReleased();
-            GameObject.Destroy(modGameObject);
+            if (_mode != LoadMode.LoadGame && _mode != LoadMode.NewGame)
+                return;
+
+            if (optionsWindow != null)
+            {
+                if (this.buildingWindow.parent != null)
+                {
+                    this.buildingWindow.parent.eventVisibilityChanged -= buildingInfo_eventVisibilityChanged;
+                }
+            }
+
+            if (modGameObject != null)
+            {
+                GameObject.Destroy(modGameObject);
+            }
+            if (buildingWindowGameObject != null)
+            {
+                GameObject.Destroy(buildingWindowGameObject);
+            }
         }
 
         public static List<UIComponent> FindUIComponents(string searchString)

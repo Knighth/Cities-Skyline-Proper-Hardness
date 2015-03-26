@@ -6,12 +6,13 @@ using System.Text;
 namespace DifficultyMod
 {
     using ColossalFramework;
+    using ColossalFramework.Plugins;
     using ColossalFramework.UI;
     using System;
     using System.Collections.Generic;
     using System.Timers;
     using UnityEngine;
-    public class OptionsWindow2 : UIPanel
+    public class OptionsWindow : UIPanel
     {
         UIButton okButton;
         UILabel title;
@@ -42,8 +43,7 @@ namespace DifficultyMod
         public override void Start()
         {
             base.Start();
-            UIColorPicker cp = AddUIComponent<UIColorPicker>();
-            
+
             relativePosition = new Vector3(396, 58);
             backgroundSprite = "MenuPanel2";
             isVisible = true;
@@ -55,7 +55,6 @@ namespace DifficultyMod
 
         public void SetupControls()
         {
-            base.Start();
             title.text = "Proper Hardness";
             title.relativePosition = new Vector3(15, 15);
             title.textScale = 0.9f;
@@ -83,7 +82,7 @@ namespace DifficultyMod
             difficultySelect.AddItem("Normal");
             difficultySelect.AddItem("Hard");
             difficultySelect.relativePosition = new Vector3(x + 100, y);
-            difficultySelect.selectedIndex = 1;
+            difficultySelect.selectedIndex = 2;
             difficultySelect.size = new Vector2(100, 20);
             difficultySelect.popupColor = new Color32(185, 221, 254, 255);
             difficultySelect.useGradient = true;
@@ -95,7 +94,6 @@ namespace DifficultyMod
             selButton.text = "";
             selButton.size = new Vector2(100, 30);
             selButton.relativePosition = new Vector3(x + 100, y);
-
             difficultyLabel.relativePosition = new Vector3(x, y);
             difficultyLabel.text = "Difficulty";
             difficultyLabel.textScale = 0.8f;
@@ -154,17 +152,18 @@ namespace DifficultyMod
             data.disastersEnabled = disastersCheck.IsChecked;
             SaveData2.WriteData(data);
             this.Hide();
-            LoadingExtension8.LoadMod(this.mode,data);
+            LoadingExtension.LoadMod(this.mode,data);
         }
 
     }
+
     public class UICustomCheckbox : UISprite
     {
         public bool IsChecked { get; set; }
 
-        public override void Awake()
+        public override void Start()
         {
-            base.Awake();
+            base.Start();
             IsChecked = true;
             spriteName = "AchievementCheckedTrue";
         }
