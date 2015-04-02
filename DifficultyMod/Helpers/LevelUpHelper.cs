@@ -141,14 +141,16 @@ namespace DifficultyMod
             switch (resource)
             {
                 case ImmaterialResourceManager.Resource.Entertainment:
-                    return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 140, 400, 50, 100);
+                    return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 140, 340, 50, 100);
                 case ImmaterialResourceManager.Resource.EducationElementary:
                 case ImmaterialResourceManager.Resource.EducationHighSchool:
                 case ImmaterialResourceManager.Resource.EducationUniversity:
+                case ImmaterialResourceManager.Resource.PublicTransport:
+                    return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 65, 130, 50, 100);
                 case ImmaterialResourceManager.Resource.DeathCare:
                     return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 35, 90, 50, 100);
             }
-            return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 80, 240, 50, 100);
+            return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 80, 220, 50, 100);
         }
 
         public double GetServiceScore(ImmaterialResourceManager.Resource resource, ItemClass.Zone zone, ushort[] array, int num)
@@ -448,7 +450,7 @@ namespace DifficultyMod
                         }
                         else
                         {
-                            return 40;
+                            return 50;
                         }
                     }
 
@@ -461,7 +463,7 @@ namespace DifficultyMod
                         }
                         else
                         {
-                            return 60;
+                            return 70;
                         }
                     }
 
@@ -474,7 +476,7 @@ namespace DifficultyMod
                         }
                         else
                         {
-                            return 85;
+                            return 88;
                         }
                     }
                     else
@@ -527,7 +529,7 @@ namespace DifficultyMod
                         }
                         else
                         {
-                            return 40;
+                            return 45;
                         }
                     }
                     else if (level == ItemClass.Level.Level2)
@@ -538,7 +540,7 @@ namespace DifficultyMod
                         }
                         else
                         {
-                            return 85;
+                            return 88;
                         }
                     }
                     else
@@ -588,7 +590,7 @@ namespace DifficultyMod
                     }
                     else
                     {
-                        return 65;
+                        return 68;
                     }
                 }
                 else if (level == ItemClass.Level.Level4)
@@ -599,7 +601,7 @@ namespace DifficultyMod
                     }
                     else
                     {
-                        return 80;
+                        return 83;
                     }
                 }
                 else
@@ -628,7 +630,7 @@ namespace DifficultyMod
                     }
                     else
                     {
-                        return 60;
+                        return 65;
                     }
                 }
                 else
@@ -686,7 +688,7 @@ namespace DifficultyMod
                     }
                     else
                     {
-                        return 40;
+                        return 45;
                     }
                 }
                 else if (level == ItemClass.Level.Level2)
@@ -697,7 +699,7 @@ namespace DifficultyMod
                     }
                     else
                     {
-                        return 75;
+                        return 80;
                     }
                 }
                 else

@@ -18,25 +18,6 @@ namespace DifficultyMod
                 if (m_instance == null)
 				{
                     m_instance = new CitizenHelper();
-                    //m_instance = UnityEngine.Object.FindObjectOfType<CitizenHelper12>();
-                    //if (m_instance == null)
-                    //{
-                    //    GameObject gameObject = new GameObject(typeof(CitizenHelper12).Name);
-                    //    if (!SingletonConfig.hide)
-                    //    {
-                    //        GameObject gameObject2 = GameObject.Find(SingletonConfig.singletonRootName);
-                    //        if (gameObject2 == null)
-                    //        {
-                    //            gameObject2 = new GameObject(SingletonConfig.singletonRootName);
-                    //            UnityEngine.Object.DontDestroyOnLoad(gameObject2);
-                    //        }
-                    //        gameObject.transform.parent = gameObject2.transform;
-                    //    }
-                    //    else
-                    //    {
-                    //        gameObject.hideFlags = HideFlags.HideInHierarchy;
-                    //    }
-                    //    m_instance = gameObject.AddComponent<CitizenHelper12>();
 					
 				}
 				return m_instance;
@@ -47,15 +28,19 @@ namespace DifficultyMod
         {
             int level = 0;
             UnlockManager um = Singleton<UnlockManager>.instance;
-            if (!um.Unlocked(ItemClass.SubService.PublicTransportMetro))
+            if (!um.Unlocked(ItemClass.SubService.PublicTransportShip))
             {
                 level += 1;
-                if (!um.Unlocked(ItemClass.Service.PublicTransport))
+                if (!um.Unlocked(ItemClass.SubService.PublicTransportMetro))
                 {
                     level += 1;
-                    if (!um.Unlocked(ItemClass.Service.HealthCare))
+                    if (!um.Unlocked(ItemClass.Service.PublicTransport))
                     {
                         level += 1;
+                        if (!um.Unlocked(ItemClass.Service.HealthCare))
+                        {
+                            level += 1;
+                        }
                     }
                 }
             }
@@ -116,7 +101,7 @@ namespace DifficultyMod
 
                 if (citizen.Sick && level < 3 && !tourist)
                 {
-                    result -= 50;
+                    result -= 40;
                 }
                 if (unemployed == 0 || tourist)
                 {
@@ -126,13 +111,13 @@ namespace DifficultyMod
                             result += 20;
                             break;
                         case Citizen.AgePhase.Teen0:
-                            result += 30;
-                            break;
-                        case Citizen.AgePhase.Teen1:
                             result += 40;
                             break;
-                        case Citizen.AgePhase.Young0:
+                        case Citizen.AgePhase.Teen1:
                             result += 50;
+                            break;
+                        case Citizen.AgePhase.Young0:
+                            result += 55;
                             break;
                         case Citizen.AgePhase.Young1:
                             result += 60;
@@ -141,7 +126,7 @@ namespace DifficultyMod
                             result += 70;
                             break;
                         case Citizen.AgePhase.Adult0:
-                            result += 50;
+                            result += 55;
                             break;
                         case Citizen.AgePhase.Adult1:
                             result += 60;
@@ -153,7 +138,7 @@ namespace DifficultyMod
                             result += 80;
                             break;
                         case Citizen.AgePhase.Senior0:
-                            result += 50;
+                            result += 55;
                             break;
                         case Citizen.AgePhase.Senior1:
                             result += 60;
@@ -167,20 +152,24 @@ namespace DifficultyMod
                     }
                 }
 
-                if (tourist || level > 2)
+                if (tourist || level > 3)
                 {
                 }
-                else if (level == 2)
+                else if (level == 3)
                 {
                     result += Math.Max(-10, citizen.m_health + citizen.m_wellbeing - 140);
                 }
-                else if (level == 1)
+                else if (level == 2)
                 {
                     result += Math.Max(-20, citizen.m_health + citizen.m_wellbeing - 145);
                 }
+                else if (level == 1)
+                {
+                    result += Math.Max(-30, citizen.m_health + citizen.m_wellbeing - 150);
+                }
                 else
                 {
-                    result += Math.Max(-44, citizen.m_health + citizen.m_wellbeing - 155);
+                    result += Math.Max(-40, citizen.m_health + citizen.m_wellbeing - 155);
                 }
 
                 if (tourist)
@@ -279,11 +268,11 @@ namespace DifficultyMod
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 145;
+                            return 140;
                         case ItemClass.Level.Level2:
-                            return 145;
+                            return 140;
                         case ItemClass.Level.Level3:
-                            return 145;
+                            return 135;
                     }
                     break;
                 case ItemClass.Zone.CommercialLow:
@@ -292,9 +281,9 @@ namespace DifficultyMod
                         case ItemClass.Level.Level1:
                             return 180;
                         case ItemClass.Level.Level2:
-                            return 185;
+                            return 180;
                         case ItemClass.Level.Level3:
-                            return 190;
+                            return 180;
                     }
                     break;
                 case ItemClass.Zone.ResidentialHigh:
@@ -305,11 +294,11 @@ namespace DifficultyMod
                         case ItemClass.Level.Level2:
                             return 145;
                         case ItemClass.Level.Level3:
-                            return 150;
+                            return 143;
                         case ItemClass.Level.Level4:
-                            return 150;
+                            return 140;
                         case ItemClass.Level.Level5:
-                            return 155;
+                            return 140;
                     }
                     break;
                 case ItemClass.Zone.ResidentialLow:

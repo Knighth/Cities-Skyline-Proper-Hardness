@@ -12,7 +12,7 @@ namespace DifficultyMod
     using System.Reflection;
     using System.Timers;
     using UnityEngine;
-    public class BuildingInfoWindow : UIPanel
+    public class BuildingInfoWindow2 : UIPanel
     {
         const float vertPadding = 26;
         float barWidth;
@@ -42,6 +42,7 @@ namespace DifficultyMod
         public ZonedBuildingWorldInfoPanel baseBuildingWindow;
         FieldInfo baseSub;
 
+        ushort selectedBuilding;
         public override void Awake()
         {
             resourceBars = new Dictionary<ImmaterialResourceManager.Resource, UIProgressBar>();
@@ -82,7 +83,7 @@ namespace DifficultyMod
 
             waitLabel = AddUIComponent<UILabel>();
             commuteWaitTimeBar = AddUIComponent<UIProgressBar>();
-            
+
             happyLabel = AddUIComponent<UILabel>();
             happyBar = AddUIComponent<UIProgressBar>();
 
@@ -108,7 +109,7 @@ namespace DifficultyMod
                 case ImmaterialResourceManager.Resource.NoisePollution:
                     return "Noise";
                 case ImmaterialResourceManager.Resource.CargoTransport:
-                    return "Cargo";            
+                    return "Cargo";
                 case ImmaterialResourceManager.Resource.EducationElementary:
                     return "Elem.";
                 case ImmaterialResourceManager.Resource.EducationHighSchool:
@@ -120,7 +121,7 @@ namespace DifficultyMod
                 case ImmaterialResourceManager.Resource.DeathCare:
                     return "Death";
             }
-            return res.ToString();        
+            return res.ToString();
         }
 
         public override void Start()
@@ -139,7 +140,7 @@ namespace DifficultyMod
         public void SetupControls()
         {
             base.Start();
-            
+
             barWidth = this.size.x - 28;
             float y = 70;
 
@@ -148,7 +149,6 @@ namespace DifficultyMod
             serviceBar.tooltip = "Progress until next level, combined score of factors shown above.";
             serviceLabel.tooltip = "Progress until next level, combined score of factors shown above.";
             y += vertPadding;
-
             SetLabel(wealthLabel, "Wealth Progress");
             SetBar(wealthBar);
             y += vertPadding;
@@ -178,6 +178,7 @@ namespace DifficultyMod
             incomeLabel.tooltip = "Total building tax income.";
             y += vertPadding;
             height = y;
+
         }
 
         private void SetBar(UIProgressBar bar)
@@ -197,7 +198,7 @@ namespace DifficultyMod
             title.size = new Vector2(120, 30);
         }
 
-        private void SetPos(UILabel title,UIProgressBar bar, float x, float y,bool visible)
+        private void SetPos(UILabel title, UIProgressBar bar, float x, float y, bool visible)
         {
             bar.relativePosition = new Vector3(x + 120, y - 3);
             title.relativePosition = new Vector3(x, y);
@@ -215,15 +216,17 @@ namespace DifficultyMod
 
         public override void Update()
         {
-            if (this.baseBuildingWindow != null && this.enabled && isVisible && Singleton<BuildingManager>.exists && (Singleton<SimulationManager>.instance.m_currentFrameIndex & 7u) == 7u)
+            var instanceId = GetParentInstanceId();
+            if (instanceId.Type == InstanceType.Building && instanceId.Building != 0)
             {
-                var instanceId = GetParentInstanceId();
-                if (instanceId.Type == InstanceType.Building && instanceId.Building != 0)
+                ushort building = instanceId.Building;
+                if (this.baseBuildingWindow != null && this.enabled && isVisible && Singleton<BuildingManager>.exists && ((Singleton<SimulationManager>.instance.m_currentFrameIndex & 15u) == 15u || selectedBuilding != building))
                 {
-                    ushort building = instanceId.Building;
+
                     BuildingManager instance = Singleton<BuildingManager>.instance;
 
                     this.UpdateBuildingInfo(building, instance.m_buildings.m_buffer[(int)building]);
+                    selectedBuilding = building;
                 }
             }
 
@@ -314,7 +317,7 @@ namespace DifficultyMod
             x = 14f;
             float y = 70f;
             SetProgress(serviceBar, levelUpHelper.GetProperServiceScore(buildingId), levelUpHelper.GetServiceThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), levelUpHelper.GetServiceThreshhold(data.Info.m_class.m_level, zone));
-            SetPos(serviceLabel, serviceBar, x, y,true);
+            SetPos(serviceLabel, serviceBar, x, y, true);
             y += vertPadding;
 
             float education;
@@ -332,7 +335,7 @@ namespace DifficultyMod
                 SetPos(educationLabel, educationBar, x, y, true);
                 y += vertPadding;
             }
-            
+
 
             if (zone == ItemClass.Zone.ResidentialHigh || zone == ItemClass.Zone.ResidentialLow)
             {
@@ -363,13 +366,13 @@ namespace DifficultyMod
 
             y += vertPadding;
 
-            SetProgress(commuteWaitTimeBar, commute, 0, 100);            
+            SetProgress(commuteWaitTimeBar, commute, 0, 100);
             SetPos(waitLabel, commuteWaitTimeBar, x, y, true);
             y += vertPadding;
 
             int income = 0;
             int tourists = 0;
-            CitizenHelper.instance.GetIncome(buildingId, data,ref income,ref tourists);
+            CitizenHelper.instance.GetIncome(buildingId, data, ref income, ref tourists);
 
             incomeLabel.text = "Tax Income: " + ((income + tourists) / 100.0).ToString("0.00");
             height = y;
@@ -382,7 +385,7 @@ namespace DifficultyMod
                 target = start;
                 start -= 20;
             }
-            serviceBar.value = Mathf.Clamp((val - start) / (float)(target - start),0f,1f);
+            serviceBar.value = Mathf.Clamp((val - start) / (float)(target - start), 0f, 1f);
         }
 
         private InstanceID GetParentInstanceId()

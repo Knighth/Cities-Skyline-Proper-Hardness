@@ -276,6 +276,14 @@ namespace DifficultyMod
 
             switch (service)
             {
+                case Service.FireDepartment:
+                case Service.PoliceDepartment:
+                case Service.HealthCare:
+                    if (originalMaintenanceCost > 420000)
+                    {
+                        multiplier = 1.8;
+                    }
+                    break;
                 case Service.Education:
                     multiplier = 2.0;
                     break;
@@ -365,6 +373,14 @@ namespace DifficultyMod
         public void OnUnlockArea(int x, int z)
         {
 
+        }
+    }
+
+    public class DifficultyModDemand : DemandExtensionBase
+    {
+        public override int OnCalculateCommercialDemand(int originalDemand)
+        {
+            return originalDemand - 22;
         }
     }
 

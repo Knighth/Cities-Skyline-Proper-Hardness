@@ -34,7 +34,7 @@ namespace DifficultyMod
         static GameObject modGameObject;
         static GameObject buildingWindowGameObject;
         OptionsWindow optionsWindow;
-        BuildingInfoWindow buildingWindow;
+        BuildingInfoWindow2 buildingWindow;
         private LoadMode _mode;
 
         private Dictionary<GameObject, bool> FindSceneRoots()
@@ -87,9 +87,9 @@ namespace DifficultyMod
             SaveData2.ResetData();
             modGameObject = new GameObject("DifficultyMod");
             buildingWindowGameObject = new GameObject("BuildingWindow");
-
+            
             var buildingInfo = UIView.Find<UIPanel>("(Library) ZonedBuildingWorldInfoPanel");
-            this.buildingWindow = buildingWindowGameObject.AddComponent<BuildingInfoWindow>();
+            this.buildingWindow = buildingWindowGameObject.AddComponent<BuildingInfoWindow2>();
             this.buildingWindow.transform.parent = buildingInfo.transform;
             this.buildingWindow.size = new Vector3(buildingInfo.size.x, buildingInfo.size.y);
             this.buildingWindow.baseBuildingWindow =  buildingInfo.gameObject.transform.GetComponentInChildren<ZonedBuildingWorldInfoPanel>();
@@ -365,7 +365,7 @@ namespace DifficultyMod
             if (_mode != LoadMode.LoadGame && _mode != LoadMode.NewGame)
                 return;
 
-            if (optionsWindow != null)
+            if (this.buildingWindow != null)
             {
                 if (this.buildingWindow.parent != null)
                 {

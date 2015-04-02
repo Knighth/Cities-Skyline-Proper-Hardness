@@ -705,7 +705,7 @@ namespace DifficultyMod
                             {
                                 data.CurrentLocation = Citizen.Location.Home;
                             }
-                            else if (((data.m_instance != 0)) && (((Singleton<SimulationManager>.instance.m_randomizer.Int32(40) < 10) && (data.m_homeBuilding != 0)) && ((data.m_instance == 0) && (data.m_vehicle == 0))))
+                            else if (Singleton<SimulationManager>.instance.m_randomizer.Int32(40) < 10 && data.m_homeBuilding != 0 && data.m_instance == 0 && data.m_vehicle == 0)
                             {
                                 base.StartMoving(citizenID, ref data, data.m_visitBuilding, data.m_homeBuilding);
                                 data.SetVisitplace(citizenID, 0, 0);
