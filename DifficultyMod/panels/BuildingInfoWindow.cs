@@ -6,13 +6,17 @@ using System.Text;
 namespace DifficultyMod
 {
     using ColossalFramework;
+    using ColossalFramework.Globalization;
+    using ColossalFramework.Math;
     using ColossalFramework.UI;
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Reflection;
     using System.Timers;
     using UnityEngine;
-    public class BuildingInfoWindow2 : UIPanel
+
+    public class BuildingInfoWindow : UIPanel
     {
         const float vertPadding = 26;
         float barWidth;
@@ -25,24 +29,36 @@ namespace DifficultyMod
         UILabel serviceLabel;
         UIProgressBar serviceBar;
 
-        UILabel wealthLabel;
-        UIProgressBar wealthBar;
-
         UILabel educationLabel;
         UIProgressBar educationBar;
 
-        UILabel waitLabel;
-        UIProgressBar commuteWaitTimeBar;
 
         UILabel happyLabel;
         UIProgressBar happyBar;
 
+        UILabel wealthLabel;
+        UIProgressBar wealthBar;
+
         UILabel incomeLabel;
+
+        UILabel waitLabel;
+        UIProgressBar commuteWaitTimeBar;
+
+        UITextField buildingName;
 
         public ZonedBuildingWorldInfoPanel baseBuildingWindow;
         FieldInfo baseSub;
 
+        Dictionary<string, Markov> buildingNames = new Dictionary<string, Markov>();
+        Dictionary<string, Markov> buildingDescriptions = new Dictionary<string, Markov>();
+
+        UIButton descriptionButton;
+        UILabel descriptionLabel;
+
         ushort selectedBuilding;
+        bool showDescription = true;
+        bool showName = true;
+
         public override void Awake()
         {
             resourceBars = new Dictionary<ImmaterialResourceManager.Resource, UIProgressBar>();
@@ -75,21 +91,64 @@ namespace DifficultyMod
             serviceLabel = AddUIComponent<UILabel>();
             serviceBar = AddUIComponent<UIProgressBar>();
 
-            wealthLabel = AddUIComponent<UILabel>();
-            wealthBar = AddUIComponent<UIProgressBar>();
-
             educationLabel = AddUIComponent<UILabel>();
             educationBar = AddUIComponent<UIProgressBar>();
-
-            waitLabel = AddUIComponent<UILabel>();
-            commuteWaitTimeBar = AddUIComponent<UIProgressBar>();
 
             happyLabel = AddUIComponent<UILabel>();
             happyBar = AddUIComponent<UIProgressBar>();
 
+            wealthLabel = AddUIComponent<UILabel>();
+            wealthBar = AddUIComponent<UIProgressBar>();
+
+            waitLabel = AddUIComponent<UILabel>();
+            commuteWaitTimeBar = AddUIComponent<UIProgressBar>();
+
             incomeLabel = AddUIComponent<UILabel>();
+
+            buildingNames.Clear();
+            LoadTextFiles();
+            
+            descriptionLabel = AddUIComponent<UILabel>();
+            descriptionButton = AddUIComponent<UIButton>();
+
             base.Awake();
 
+        }
+
+
+        private void LoadTextFiles()
+        {
+
+            var commercialName = new Markov("nameCommercial", false, 4);
+            buildingNames.Add(ItemClass.Zone.CommercialHigh.ToString(), commercialName);
+            buildingNames.Add(ItemClass.Zone.CommercialLow.ToString(), commercialName);
+            var resName = new Markov("nameResidential", false, 4);
+            buildingNames.Add(ItemClass.Zone.ResidentialHigh.ToString(), resName);
+            buildingNames.Add(ItemClass.Zone.ResidentialLow.ToString(), resName);
+            var indyName = new Markov("nameIndustrial", false, 4);
+            buildingNames.Add(ItemClass.Zone.Industrial.ToString(), indyName);
+            var officeName = new Markov("nameOffice", false, 4);
+            buildingNames.Add(ItemClass.Zone.Office.ToString(), officeName);
+            buildingNames.Add(ItemClass.SubService.IndustrialFarming.ToString(), new Markov("nameFarm", false, 4));
+            buildingNames.Add(ItemClass.SubService.IndustrialForestry.ToString(), new Markov("nameForest", false, 4));
+            buildingNames.Add(ItemClass.SubService.IndustrialOre.ToString(), new Markov("nameMine", false, 4));
+            buildingNames.Add(ItemClass.SubService.IndustrialOil.ToString(), new Markov("nameOil", false, 4));
+
+            buildingDescriptions.Clear();
+            var commercialDescription = new Markov("descriptionsCommercial", false, 9);
+            buildingDescriptions.Add(ItemClass.Zone.CommercialHigh.ToString(), commercialDescription);
+            buildingDescriptions.Add(ItemClass.Zone.CommercialLow.ToString(), commercialDescription);
+            var resDescription = new Markov("descriptionsResidential", false, 9);
+            buildingDescriptions.Add(ItemClass.Zone.ResidentialHigh.ToString(), resDescription);
+            buildingDescriptions.Add(ItemClass.Zone.ResidentialLow.ToString(), resDescription);
+            var indyDescription = new Markov("descriptionsIndustrial", false, 9);
+            buildingDescriptions.Add(ItemClass.Zone.Industrial.ToString(), indyDescription);
+            var officeDescription = new Markov("descriptionsOffice", false, 9);
+            buildingDescriptions.Add(ItemClass.Zone.Office.ToString(), officeDescription);
+            buildingDescriptions.Add(ItemClass.SubService.IndustrialFarming.ToString(), new Markov("descriptionsFarm", false, 4));
+            buildingDescriptions.Add(ItemClass.SubService.IndustrialForestry.ToString(), new Markov("descriptionsForest", false, 4));
+            buildingDescriptions.Add(ItemClass.SubService.IndustrialOre.ToString(), new Markov("descriptionsMine", false, 4));
+            buildingDescriptions.Add(ItemClass.SubService.IndustrialOil.ToString(), new Markov("descriptionsOil", false, 4));
         }
 
         private string GetName(ImmaterialResourceManager.Resource res)
@@ -101,11 +160,11 @@ namespace DifficultyMod
                 case ImmaterialResourceManager.Resource.PoliceDepartment:
                     return "Police";
                 case ImmaterialResourceManager.Resource.PublicTransport:
-                    return "Transport";
+                    return "Transp.";
                 case ImmaterialResourceManager.Resource.Abandonment:
                     return "Abandonment";
                 case ImmaterialResourceManager.Resource.Entertainment:
-                    return "Entertainment";
+                    return "Parks";
                 case ImmaterialResourceManager.Resource.NoisePollution:
                     return "Noise";
                 case ImmaterialResourceManager.Resource.CargoTransport:
@@ -128,9 +187,8 @@ namespace DifficultyMod
         {
             base.Start();
 
-            //relativePosition = new Vector3(396, 58);
             backgroundSprite = "MenuPanel2";
-            opacity = 0.75f;
+            opacity = 0.8f;
             isVisible = true;
             canFocus = true;
             isInteractive = true;
@@ -146,7 +204,7 @@ namespace DifficultyMod
 
             SetLabel(serviceLabel, "Service Progress");
             SetBar(serviceBar);
-            serviceBar.tooltip = "Progress until next level, combined score of factors shown above.";
+            serviceBar.tooltip = "Progress until next level, combined score of factors shown above. 0/0";
             serviceLabel.tooltip = "Progress until next level, combined score of factors shown above.";
             y += vertPadding;
             SetLabel(wealthLabel, "Wealth Progress");
@@ -155,13 +213,13 @@ namespace DifficultyMod
 
             SetLabel(educationLabel, "Education Progress");
             SetBar(educationBar);
-            educationBar.tooltip = "Progress until next level, educate more cims to increase.";
+            educationBar.tooltip = "Progress until next level, educate more cims to increase. 0/0";
             educationLabel.tooltip = "Progress until next level, educate more cims to increase.";
             y += vertPadding;
 
             SetLabel(waitLabel, "Idle Commute Time");
             SetBar(commuteWaitTimeBar);
-            commuteWaitTimeBar.tooltip = "Average time cims spend waiting (for public transport or stopped in traffic), affects their happiness.";
+            commuteWaitTimeBar.tooltip = "Average time cims spend waiting (for public transport or stopped in traffic), affects their happiness. 0/0";
             waitLabel.tooltip = "Average time cims spend waiting (for public transport or stopped in traffic), affects their happiness.";
             commuteWaitTimeBar.progressColor = Color.red;
 
@@ -169,16 +227,38 @@ namespace DifficultyMod
 
             SetLabel(happyLabel, "Happiness");
             SetBar(happyBar);
-            happyBar.tooltip = "Average happiness, affects amount of tax paid.";
+            happyBar.tooltip = "Average happiness, affects amount of tax paid. 0/0";
             happyLabel.tooltip = "Average happiness, affects amount of tax paid.";
             happyBar.size = new Vector2(barWidth - 260, 16);
-
+            
 
             SetLabel(incomeLabel, "Tax Income:");
             incomeLabel.tooltip = "Total building tax income.";
+            descriptionLabel.textScale = 0.65f;
+            descriptionLabel.wordWrap = true;
+            //descriptionLabel.size = new Vector2(barWidth - 20, 140);
+            descriptionLabel.autoSize = false;
+            descriptionLabel.width = barWidth;
+            descriptionLabel.wordWrap = true;
+            descriptionLabel.autoHeight = true;
+            descriptionLabel.anchor = (UIAnchorStyle.Top | UIAnchorStyle.Left | UIAnchorStyle.Right);
+            descriptionButton.normalBgSprite = "IconDownArrow";
+            descriptionButton.hoveredBgSprite = "IconDownArrowHovered";
+            descriptionButton.focusedBgSprite = "IconDownArrowFocused";
+            descriptionButton.pressedBgSprite = "IconDownArrow";
+            descriptionButton.size = new Vector3(80, 20);
+            descriptionButton.color = Color.white;
+            descriptionButton.colorizeSprites = true;
+
+            descriptionButton.eventClick += descriptionButton_eventClick;
+
             y += vertPadding;
             height = y;
+        }
 
+        private void descriptionButton_eventClick(UIComponent component, UIMouseEventParameter eventParam)
+        {
+            showDescription = !showDescription;
         }
 
         private void SetBar(UIProgressBar bar)
@@ -222,12 +302,16 @@ namespace DifficultyMod
                 ushort building = instanceId.Building;
                 if (this.baseBuildingWindow != null && this.enabled && isVisible && Singleton<BuildingManager>.exists && ((Singleton<SimulationManager>.instance.m_currentFrameIndex & 15u) == 15u || selectedBuilding != building))
                 {
-
                     BuildingManager instance = Singleton<BuildingManager>.instance;
-
                     this.UpdateBuildingInfo(building, instance.m_buildings.m_buffer[(int)building]);
                     selectedBuilding = building;
                 }
+            }
+
+            if (Input.GetKeyDown(KeyCode.N))
+            {
+                showDescription = !showName;
+                showName = showDescription;
             }
 
             base.Update();
@@ -272,7 +356,9 @@ namespace DifficultyMod
                 {
                     label.Show();
                     resBar.Value.Show();
-                    var value = levelUpHelper.GetServiceScore(resBar.Key, zone, array, num);
+                    int max = 0;
+                    int raw = 0;
+                    var value = levelUpHelper.GetServiceScore(resBar.Key, zone, array, num,ref raw, ref max);
 
                     if (factor > 0)
                     {
@@ -287,10 +373,9 @@ namespace DifficultyMod
                         label.relativePosition = new Vector3(negativeX, 56);
                         resBar.Value.relativePosition = new Vector3(negativeX, 36);
                         negativeX += resBar.Value.size.x;
-                        resBar.Value.progressColor = Color.red;
+                        resBar.Value.progressColor = Color.red;                        
                     }
-                    resBar.Value.value = (float)(value / 100f);
-                    //label.text = value.ToString();
+                    SetProgress(resBar.Value, (float)value, 0, 100, raw, max);                
                 }
             }
 
@@ -301,7 +386,7 @@ namespace DifficultyMod
 
                 pollutionBar.size = new Vector2((float)(barWidth * -factor / totalNegativeFactor), 16);
                 pollutionLabel.relativePosition = new Vector3(negativeX, 56);
-                pollutionBar.value = (float)value / 100f;
+                SetProgress(pollutionBar, (float)value, 0, 100);
                 pollutionBar.relativePosition = new Vector3(negativeX, 36);
                 negativeX += pollutionBar.size.x;
 
@@ -339,19 +424,18 @@ namespace DifficultyMod
 
             if (zone == ItemClass.Zone.ResidentialHigh || zone == ItemClass.Zone.ResidentialLow)
             {
+                wealthBar.tooltip = "Progress until next level, increases when cims reach work or shops. 0/0";
+                wealthLabel.tooltip = "Progress until next level, increases when cims reach work or shops.";
                 SetProgress(wealthBar, data.m_customBuffer1, levelUpHelper.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), levelUpHelper.GetWealthThreshhold(data.Info.m_class.m_level, zone));
                 SetPos(wealthLabel, wealthBar, x, y, true);
-                wealthBar.tooltip = "Progress until next level, increases when cims reach work or shops.";
-                wealthLabel.tooltip = "Progress until next level, increases when cims reach work or shops.";
                 y += vertPadding;
             }
             else if (zone == ItemClass.Zone.CommercialHigh || zone == ItemClass.Zone.CommercialLow)
             {
-
+                wealthBar.tooltip = "Progress until next level, increases when wealthier cims shop here. 0/0";
+                wealthLabel.tooltip = "Progress until next level, increases when wealthier cims shop here.";
                 SetProgress(wealthBar, education, levelUpHelper.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)data.Info.m_class.m_level - 1)), zone), levelUpHelper.GetWealthThreshhold(data.Info.m_class.m_level, zone));
                 SetPos(wealthLabel, wealthBar, x, y, true);
-                wealthBar.tooltip = "Progress until next level, increases when wealthier cims shop here.";
-                wealthLabel.tooltip = "Progress until next level, increases when wealthier cims shop here.";
                 y += vertPadding;
             }
             else
@@ -359,7 +443,6 @@ namespace DifficultyMod
                 SetPos(wealthLabel, wealthBar, x, y, false);
             }
             y += 10;
-
             SetProgress(happyBar, happy, 0, 100);
             SetPos(happyLabel, happyBar, x, y, true);
             incomeLabel.relativePosition = new Vector3(barWidth - 90, y);
@@ -368,18 +451,124 @@ namespace DifficultyMod
 
             SetProgress(commuteWaitTimeBar, commute, 0, 100);
             SetPos(waitLabel, commuteWaitTimeBar, x, y, true);
-            y += vertPadding;
 
             int income = 0;
             int tourists = 0;
             CitizenHelper.instance.GetIncome(buildingId, data, ref income, ref tourists);
-
             incomeLabel.text = "Tax Income: " + ((income + tourists) / 100.0).ToString("0.00");
+
+            y += vertPadding;
+
+
+            descriptionButton.relativePosition = new Vector3(this.width / 2 - 40, y - 10);
+            y += 12;
+
+            if (this.baseBuildingWindow != null)
+            {
+                if (buildingName == null)
+                {
+                    this.buildingName = this.baseBuildingWindow.Find<UITextField>("BuildingName");
+                    this.buildingName.maxLength = 50;
+                    this.buildingName.textScale = 0.87f;
+                }
+                if (buildingName != null)
+                {
+                    var bName = this.buildingName.text;
+                    if (showName)
+                    {
+                        if ((data.m_flags & Building.Flags.CustomName) == Building.Flags.None && !this.buildingName.hasFocus)
+                        {
+                            bName = GetName(buildingId, zone, data.Info.m_class.m_subService);
+                            this.buildingName.text = bName;
+                        }
+                    }
+
+                    if (showDescription)
+                    {
+                        var desc = GetDescription(bName, buildingId, zone, data.Info.m_class.m_subService);
+                        descriptionLabel.text = desc;
+                        descriptionLabel.Show();
+                        descriptionLabel.relativePosition = new Vector3(x, y);
+                        y += descriptionLabel.height + 10;
+                    }
+                    else
+                    {
+                        descriptionLabel.Hide();
+                    }
+                }
+            }
             height = y;
+
         }
 
-        private void SetProgress(UIProgressBar serviceBar, float val, float start, float target)
+        private string GetDescription(string bName, ushort buildingId, ItemClass.Zone zone, ItemClass.SubService ss)
         {
+
+            Randomizer randomizer = new Randomizer(Singleton<SimulationManager>.instance.m_metaData.m_gameInstanceIdentifier.GetHashCode() - buildingId);
+            var year = 2015 - buildingId % 200;
+            Markov markov = null;
+            if (!this.buildingDescriptions.TryGetValue(ss.ToString(), out markov))
+            {
+                this.buildingDescriptions.TryGetValue(zone.ToString(), out markov);
+            }
+            if (markov != null)
+            {
+                var text = markov.GetText(ref randomizer, 100, 200, true);
+                var cityName = Singleton<SimulationManager>.instance.m_metaData.m_CityName.Trim();
+                text = text.Replace("COMPANY", bName).Replace("DATE", year.ToString()).Replace("SITY", cityName);
+                return text;
+            }
+            return "";
+        }
+
+        private string GetName(ushort buildingId, ItemClass.Zone zone, ItemClass.SubService ss)
+        {
+            Randomizer randomizer = new Randomizer(Singleton<SimulationManager>.instance.m_metaData.m_gameInstanceIdentifier.GetHashCode() - buildingId);
+            if (buildingId % 6 != 0)
+            {
+                Markov markov = null;
+                if (!this.buildingNames.TryGetValue(ss.ToString(), out markov))
+                {
+                    this.buildingNames.TryGetValue(zone.ToString(), out markov);
+                }
+                if (markov != null)
+                {
+                    return markov.GetText(ref randomizer, 6, 16, true, true);
+                }
+            }
+            return this.buildingName.text;
+        }
+
+        private void SetProgress(UIProgressBar serviceBar, float val, float start, float target, int raw = -1, int max = -1)
+        {
+            var extraTip = "";
+            if (target == int.MaxValue)
+            {
+                extraTip = "Max!";
+            }
+            else if (raw != -1)
+            {
+                extraTip = raw.ToString("F0") + "/" + max.ToString("F0");
+            }
+            else if (start == 0)
+            {
+                extraTip = val.ToString("F0") + "/" + target.ToString("F0");
+
+            }
+            else
+            {
+                extraTip = start.ToString("F0") + "/" + val.ToString("F0") + "/" + target.ToString("F0");
+            }
+
+            var lastIndex = serviceBar.tooltip.LastIndexOf(' ');
+            if (lastIndex > 0)
+            {
+                serviceBar.tooltip = serviceBar.tooltip.Substring(0, lastIndex) + " " + extraTip;
+            }
+            else
+            {
+                serviceBar.tooltip = extraTip;
+            }
             if (target == int.MaxValue)
             {
                 target = start;

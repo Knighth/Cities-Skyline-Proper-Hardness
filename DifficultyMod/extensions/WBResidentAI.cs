@@ -87,7 +87,7 @@ namespace DifficultyMod
             BuildingInfo info = manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding].Info;
             int amountDelta = 50;
             info.m_buildingAI.ModifyMaterialBuffer(citizenData.m_sourceBuilding, ref manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
-            commuteHappinness[citizen] = (byte)Mathf.Clamp((int)(((int)commuteHappinness[citizen] * 2.0 + (int)commuteWait[citizen]) / 3.0), 0, 255);
+            commuteHappinness[citizen] = (byte)Mathf.Clamp((int)(((int)commuteHappinness[citizen] * 3.0 + (int)commuteWait[citizen]) / 4.0), 0, 255);
         }
 
         protected void StartJourney(uint citizen, Citizen data)

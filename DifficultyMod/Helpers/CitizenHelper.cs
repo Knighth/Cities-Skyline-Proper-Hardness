@@ -157,19 +157,19 @@ namespace DifficultyMod
                 }
                 else if (level == 3)
                 {
-                    result += Math.Max(-10, citizen.m_health + citizen.m_wellbeing - 140);
+                    result += Math.Min(Math.Max(-10, citizen.m_health + citizen.m_wellbeing - 135), 60);
                 }
                 else if (level == 2)
                 {
-                    result += Math.Max(-20, citizen.m_health + citizen.m_wellbeing - 145);
+                    result += Math.Min(Math.Max(-20, citizen.m_health + citizen.m_wellbeing - 140), 60);
                 }
                 else if (level == 1)
                 {
-                    result += Math.Max(-30, citizen.m_health + citizen.m_wellbeing - 150);
+                    result += Math.Min(Math.Max(-30, citizen.m_health + citizen.m_wellbeing - 145), 60);
                 }
                 else
                 {
-                    result += Math.Max(-40, citizen.m_health + citizen.m_wellbeing - 155);
+                    result += Math.Min(Math.Max(-40, citizen.m_health + citizen.m_wellbeing - 150), 60);
                 }
 
                 if (tourist)
@@ -268,37 +268,37 @@ namespace DifficultyMod
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 140;
+                            return 150;
                         case ItemClass.Level.Level2:
-                            return 140;
+                            return 150;
                         case ItemClass.Level.Level3:
-                            return 135;
+                            return 150;
                     }
                     break;
                 case ItemClass.Zone.CommercialLow:
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 180;
+                            return 186;
                         case ItemClass.Level.Level2:
-                            return 180;
+                            return 186;
                         case ItemClass.Level.Level3:
-                            return 180;
+                            return 186;
                     }
                     break;
                 case ItemClass.Zone.ResidentialHigh:
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 145;
+                            return 150;
                         case ItemClass.Level.Level2:
-                            return 145;
+                            return 150;
                         case ItemClass.Level.Level3:
-                            return 143;
+                            return 150;
                         case ItemClass.Level.Level4:
-                            return 140;
+                            return 150;
                         case ItemClass.Level.Level5:
-                            return 140;
+                            return 150;
                     }
                     break;
                 case ItemClass.Zone.ResidentialLow:
@@ -320,11 +320,11 @@ namespace DifficultyMod
                     switch (level)
                     {
                         case ItemClass.Level.Level1:
-                            return 170;
+                            return 174;
                         case ItemClass.Level.Level2:
-                            return 170;
+                            return 178;
                         case ItemClass.Level.Level3:
-                            return 170;
+                            return 180;
                     }
                     break;
                 case ItemClass.Zone.Industrial:
@@ -398,8 +398,7 @@ namespace DifficultyMod
             else if (zone == ItemClass.Zone.Office)
             {
                 GetCitizenIncome(CitizenUnit.Flags.Work, buildingData, ref income, ref tourists);
-            }
-            
+            }            
 
             income = (income * baseIncome + 99) / 100;
             tourists = (tourists * baseIncome + 99) / 100;

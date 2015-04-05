@@ -47,7 +47,11 @@ namespace DifficultyMod
                         var fireChance = 220u;
                         if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.Hard)
                         {
-                            fireChance = 200u;
+                            fireChance = 170u;
+                        }
+                        else if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.DwarfFortress)
+                        {
+                             fireChance = 100u;
                         }
 
                         if (num5 != buildingID && Singleton<SimulationManager>.instance.m_randomizer.Int32(fireChance) < damageAccumulation)

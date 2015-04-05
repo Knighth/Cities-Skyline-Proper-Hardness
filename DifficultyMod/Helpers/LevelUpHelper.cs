@@ -131,31 +131,37 @@ namespace DifficultyMod
             }
             int num;
             Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out num);
-            var after = GetServiceScore(Mathf.RoundToInt(amount) + num, resource);
-            var before = GetServiceScore(num, resource);
+            int max = 0;
+            var after = GetServiceScore(Mathf.RoundToInt(amount) + num, resource,ref max);
+            var before = GetServiceScore(num, resource, ref max);
             return sign * Mathf.Clamp((float)(after - before) / 100, -1f, 1f);
         }
 
-        public double GetServiceScore(int resourceRate, ImmaterialResourceManager.Resource resource)
+        public double GetServiceScore(int resourceRate, ImmaterialResourceManager.Resource resource,ref int max)
         {
             switch (resource)
             {
                 case ImmaterialResourceManager.Resource.Entertainment:
+                    max = 140;
                     return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 140, 340, 50, 100);
                 case ImmaterialResourceManager.Resource.EducationElementary:
                 case ImmaterialResourceManager.Resource.EducationHighSchool:
                 case ImmaterialResourceManager.Resource.EducationUniversity:
                 case ImmaterialResourceManager.Resource.PublicTransport:
+                    max = 130;
                     return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 65, 130, 50, 100);
                 case ImmaterialResourceManager.Resource.DeathCare:
+                    max = 90;
                     return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 35, 90, 50, 100);
             }
-            return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 80, 220, 50, 100);
+            max = 210;
+            return ImmaterialResourceManager.CalculateResourceEffect(resourceRate, 80, 210, 50, 100);
         }
 
-        public double GetServiceScore(ImmaterialResourceManager.Resource resource, ItemClass.Zone zone, ushort[] array, int num)
+        public double GetServiceScore(ImmaterialResourceManager.Resource resource, ItemClass.Zone zone, ushort[] array, int num, ref int raw, ref int max)
         {
-            return GetServiceScore(array[num + (int)resource], resource);
+            raw = array[num + (int)resource];
+            return GetServiceScore(raw, resource, ref max);
         }
 
         public int GetProperServiceScore(ushort buildingID)
@@ -169,7 +175,9 @@ namespace DifficultyMod
             for (var i = 0; i < 20; i += 1)
             {
                 var imr = (ImmaterialResourceManager.Resource)i;
-                num2 += GetServiceScore(imr, zone, array, num) * GetFactor(zone, imr);
+                int raw = 0;
+                int max = 0;
+                num2 += GetServiceScore(imr, zone, array, num, ref raw, ref max) * GetFactor(zone, imr);
             }
 
             num2 -= GetPollutionScore(data, zone) * GetPollutionFactor(zone);
@@ -197,7 +205,7 @@ namespace DifficultyMod
                     int num = behaviourData.m_educated1Count + behaviourData.m_educated2Count * 3 / 2 + behaviourData.m_educated3Count * 2;
                     int num2 = behaviourData.m_teenCount + behaviourData.m_youngCount + behaviourData.m_adultCount + behaviourData.m_seniorCount;
                     education = (100 * num) / (float)(num2 * 2f);
-                    happy = 100 * behaviourData.m_wellbeingAccumulation / (float)(alive * 255);
+                    happy = GetHappyScore(behaviourData, alive);
                     GetCommute(buildingID, data, out commute);
                     return;
                 }
@@ -209,7 +217,7 @@ namespace DifficultyMod
                 {
                     int num = behaviourData.m_wealth1Count + behaviourData.m_wealth2Count * 2 + behaviourData.m_wealth3Count * 2;
                     education = (100 * num) / (float)(alive * 2f);
-                    happy = 100 * behaviourData.m_wellbeingAccumulation / (float)(alive * 255);
+                    happy = GetHappyScore(behaviourData, alive);
                     GetCommute(buildingID, data, out commute);
                     return;
                 }
@@ -221,7 +229,7 @@ namespace DifficultyMod
                 {
                     int num = behaviourData.m_educated1Count + behaviourData.m_educated2Count * 3 / 2 + behaviourData.m_educated3Count * 2;
                     education = (100 * num) / (float)(alive * 2f);
-                    happy = 100 * behaviourData.m_wellbeingAccumulation / (float)(alive * 255);
+                    happy = GetHappyScore(behaviourData,alive);
                     GetCommute(buildingID, data, out commute);
                     return;
                 }
@@ -231,6 +239,12 @@ namespace DifficultyMod
             happy = 0;
             commute = 0;
         }
+
+        private float GetHappyScore(Citizen.BehaviourData behaviourData, int alive)
+        {
+            return Math.Min(Math.Max(-40, (behaviourData.m_healthAccumulation + behaviourData.m_wellbeingAccumulation) / (float)alive - 155), 60) + 40;
+        }
+
 
         public void GetCommute(ushort buildingID, Building buildingData, out float commute)
         {

@@ -47,7 +47,7 @@ namespace DifficultyMod
 
             if ((buildingData.m_flags & Building.Flags.BurnedDown) != Building.Flags.None || (buildingData.m_flags & Building.Flags.Abandoned) != Building.Flags.None)
             {
-                float radius = (float)(buildingData.Width + buildingData.Length) * 25.0f;
+                float radius = (float)(buildingData.Width + buildingData.Length) * 32.0f;
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Abandonment, 40, buildingData.m_position, radius);
             }
             else if (buildingData.m_fireIntensity == 0)
@@ -58,6 +58,28 @@ namespace DifficultyMod
                 DistrictManager instance = Singleton<DistrictManager>.instance;
                 byte district = instance.GetDistrict(buildingData.m_position);
                 DistrictPolicies.Taxation taxationPolicies = instance.m_districts.m_buffer[(int)district].m_taxationPolicies;
+
+                if (Singleton<UnlockManager>.instance.Unlocked(ItemClass.Service.PoliceDepartment) && (SimulationManager.instance.m_currentFrameIndex & 1u) == 1u)
+                {                    
+                    var extraCrime = 0;
+                    if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.DwarfFortress)
+                    {
+                        extraCrime = 10;
+                    }
+                    if (income < 0)
+                    {
+                        extraCrime += 10;
+                    }
+                    if (income < 1000)
+                    {
+                        extraCrime += 2;
+                    }
+                    int taxRate = EconomyManager.instance.GetTaxRate(buildingData.Info.m_class.m_service, buildingData.Info.m_class.m_subService, buildingData.Info.m_class.m_level, taxationPolicies);
+
+                    extraCrime += Math.Max(0,taxRate * 5 - 55);
+                    buildingData.m_crimeBuffer = (ushort)Mathf.Min(20000, (int)buildingData.m_crimeBuffer + extraCrime);
+                }
+
                 if (income > 0)
                 {
                     Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.PrivateIncome, -income, this.m_info.m_class, taxationPolicies);
@@ -97,6 +119,11 @@ namespace DifficultyMod
                         data.m_customBuffer1 = (ushort)Mathf.Clamp(data.m_customBuffer1 + amountDelta, 1, 30000);
                         return;
                     }
+                case TransferManager.TransferReason.Crime:
+                    int crimeBuffer = (int)data.m_crimeBuffer;
+			        amountDelta = Mathf.Clamp(amountDelta, -crimeBuffer, 65535 - crimeBuffer) / 4;
+			        data.m_crimeBuffer = (ushort)(crimeBuffer + amountDelta);
+                    return;
             }
             base.ModifyMaterialBuffer(buildingID, ref data, material, ref amountDelta);
         }

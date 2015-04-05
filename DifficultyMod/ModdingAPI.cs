@@ -219,12 +219,13 @@ namespace DifficultyMod
 
         public override int OnGetConstructionCost(int originalConstructionCost, Service service, SubService subService, Level level)
         {
-            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            if (SaveData2.saveData.DifficultyLevel < DifficultyLevel.Hard)
             {
                 return originalConstructionCost;
             }
 
             var multiplier = 1.4;
+
             if (originalConstructionCost > 30000000)
             {
                 multiplier = 20;
@@ -267,12 +268,18 @@ namespace DifficultyMod
 
         public override int OnGetMaintenanceCost(int originalMaintenanceCost, Service service, SubService subService, Level level)
         {
-            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            if (SaveData2.saveData.DifficultyLevel < DifficultyLevel.Hard)
             {
                 return originalMaintenanceCost;
             }
 
-            var multiplier = 1.6;
+            var multiplier = 1.54;
+
+            if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.DwarfFortress)
+            {
+                multiplier = 2.0;
+            }
+
 
             switch (service)
             {
@@ -286,9 +293,17 @@ namespace DifficultyMod
                     break;
                 case Service.Education:
                     multiplier = 2.0;
+                    if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.DwarfFortress)
+                    {
+                        multiplier = 2.4;
+                    }
                     break;
                 case Service.Road:
                     multiplier = 2.0;
+                    if (SaveData2.saveData.DifficultyLevel == DifficultyLevel.DwarfFortress)
+                    {
+                        multiplier = 2.4;
+                    }
                     break;
                 case Service.Garbage:
                     multiplier = 1;
@@ -299,7 +314,7 @@ namespace DifficultyMod
 
         public override int OnGetRelocationCost(int constructionCost, int relocationCost, Service service, SubService subService, Level level)
         {
-            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            if (SaveData2.saveData.DifficultyLevel < DifficultyLevel.Hard)
             {
                 return constructionCost;
             }
@@ -331,7 +346,7 @@ namespace DifficultyMod
                     return -amount;
                 }
             }
-            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            if (SaveData2.saveData.DifficultyLevel < DifficultyLevel.Hard)
             {
                 return amount;
             }
@@ -363,7 +378,7 @@ namespace DifficultyMod
 
         public int OnGetAreaPrice(uint ore, uint oil, uint forest, uint fertility, uint water, bool road, bool train, bool ship, bool plane, float landFlatness, int originalPrice)
         {
-            if (SaveData2.saveData.DifficultyLevel != DifficultyLevel.Hard)
+            if (SaveData2.saveData.DifficultyLevel < DifficultyLevel.Hard)
             {
                 return originalPrice;
             }

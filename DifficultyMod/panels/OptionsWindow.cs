@@ -12,22 +12,21 @@ namespace DifficultyMod
     using System.Collections.Generic;
     using System.Timers;
     using UnityEngine;
-    public class OptionsWindow : UIPanel
+    public class OptionsWindow2 : UIPanel
     {
         UIButton okButton;
         UILabel title;
-        UICustomCheckbox disastersCheck;
+        UICustomCheckbox2 disastersCheck;
         UILabel disastersLabel;
         UIDropDown difficultySelect;
         UIButton selButton;
         UILabel difficultyLabel;
         UILabel infoLabel;
-        public ICities.LoadMode mode;
 
         public override void Awake()
         {
             title = AddUIComponent<UILabel>();
-            disastersCheck = AddUIComponent<UICustomCheckbox>();
+            disastersCheck = AddUIComponent<UICustomCheckbox2>();
             disastersLabel = AddUIComponent<UILabel>();            
             difficultySelect = AddUIComponent<UIDropDown>();
             selButton = AddUIComponent<UIButton>();
@@ -36,7 +35,6 @@ namespace DifficultyMod
             okButton = AddUIComponent<UIButton>();
             width = 300;
             height = 200;
-
             base.Awake();
 
         }
@@ -46,7 +44,6 @@ namespace DifficultyMod
 
             relativePosition = new Vector3(396, 58);
             backgroundSprite = "MenuPanel2";
-            isVisible = true;
             canFocus = true;
             isInteractive = true;
             this.CenterToParent();
@@ -81,15 +78,18 @@ namespace DifficultyMod
             difficultySelect.AddItem("Vanilla");
             difficultySelect.AddItem("Normal");
             difficultySelect.AddItem("Hard");
+            difficultySelect.AddItem("DwarfFortress");
             difficultySelect.relativePosition = new Vector3(x + 100, y);
             difficultySelect.selectedIndex = 2;
-            difficultySelect.size = new Vector2(100, 20);
+            difficultySelect.size = new Vector2(width - 120, 20);
             difficultySelect.popupColor = new Color32(185, 221, 254, 255);
             difficultySelect.useGradient = true;
             difficultySelect.triggerButton = selButton;
             difficultySelect.eventSelectedIndexChanged += difficultySelect_eventSelectedIndexChanged;
-            difficultySelect.listBackground = "UnlockingBackground";
-            difficultySelect.normalBgSprite = "SubBarButtonBase";
+            difficultySelect.listBackground = "ListItemHover";
+            difficultySelect.normalBgSprite = "ListItemHover";
+            difficultySelect.textScale = 0.8f;
+            difficultySelect.itemPadding = new RectOffset(5,0, 3, 5);
 
             selButton.text = "";
             selButton.size = new Vector2(100, 30);
@@ -131,6 +131,9 @@ namespace DifficultyMod
             var diff = (DifficultyLevel)difficultySelect.selectedIndex;
             switch (diff)
             {
+                case DifficultyLevel.DwarfFortress:
+                    infoLabel.text = "Very hard mode.";
+                    break;
                 case DifficultyLevel.Hard:
                     infoLabel.text = "Gameplay and cost changes.";
                     break;
@@ -152,12 +155,18 @@ namespace DifficultyMod
             data.disastersEnabled = disastersCheck.IsChecked;
             SaveData2.WriteData(data);
             this.Hide();
-            LoadingExtension.LoadMod(this.mode,data);
+            LoadingExtension.LoadMod(data);
         }
 
+
+        public void ShowError()
+        {
+            this.Show();
+            infoLabel.text = "Not all AI classes replaced, please ensure you have no conflicting mods.";
+        }
     }
 
-    public class UICustomCheckbox : UISprite
+    public class UICustomCheckbox2 : UISprite
     {
         public bool IsChecked { get; set; }
 

@@ -33,9 +33,11 @@ namespace DifficultyMod
     {
         static GameObject modGameObject;
         static GameObject buildingWindowGameObject;
-        OptionsWindow optionsWindow;
-        BuildingInfoWindow2 buildingWindow;
-        private LoadMode _mode;
+        static OptionsWindow2 optionsWindow;
+        static BuildingInfoWindow buildingWindow;
+        static ServiceInfoWindow3 serviceWindow;
+
+        private static LoadMode _mode;
 
         private Dictionary<GameObject, bool> FindSceneRoots()
         {
@@ -87,51 +89,62 @@ namespace DifficultyMod
             SaveData2.ResetData();
             modGameObject = new GameObject("DifficultyMod");
             buildingWindowGameObject = new GameObject("BuildingWindow");
-            
-            var buildingInfo = UIView.Find<UIPanel>("(Library) ZonedBuildingWorldInfoPanel");
-            this.buildingWindow = buildingWindowGameObject.AddComponent<BuildingInfoWindow2>();
-            this.buildingWindow.transform.parent = buildingInfo.transform;
-            this.buildingWindow.size = new Vector3(buildingInfo.size.x, buildingInfo.size.y);
-            this.buildingWindow.baseBuildingWindow =  buildingInfo.gameObject.transform.GetComponentInChildren<ZonedBuildingWorldInfoPanel>();
-            this.buildingWindow.position = new Vector3(0, -20);
-
-            //buildingInfo.eventPositionChanged += (component, param) =>
-            //{
-            //    
-            //    this.buildingWindow.Update();
-            //};
-
-            buildingInfo.eventVisibilityChanged += buildingInfo_eventVisibilityChanged;
+            InitWindows();
 
             if (SaveData2.MustInitialize())
             {
-                var view = UIView.GetAView();
-                this.optionsWindow = modGameObject.AddComponent<OptionsWindow>();
-                this.optionsWindow.transform.parent = view.transform;
-                this.optionsWindow.mode = mode;
+                optionsWindow.Show();
             }
             else
             {
-                LoadMod(mode, SaveData2.saveData);
+                LoadMod(SaveData2.saveData);
             }
-
         }
 
+        private void InitWindows()
+        {
+            var buildingInfo = UIView.Find<UIPanel>("(Library) ZonedBuildingWorldInfoPanel");
+            buildingWindow = buildingWindowGameObject.AddComponent<BuildingInfoWindow>();
+            buildingWindow.transform.parent = buildingInfo.transform;
+            buildingWindow.size = new Vector3(buildingInfo.size.x, buildingInfo.size.y);
+            buildingWindow.baseBuildingWindow = buildingInfo.gameObject.transform.GetComponentInChildren<ZonedBuildingWorldInfoPanel>();
+            buildingWindow.position = new Vector3(0, 12);
+
+            var serviceBuildingInfo = UIView.Find<UIPanel>("(Library) CityServiceWorldInfoPanel");
+            serviceWindow = buildingWindowGameObject.AddComponent<ServiceInfoWindow3>();
+            serviceWindow.servicePanel = serviceBuildingInfo.gameObject.transform.GetComponentInChildren<CityServiceWorldInfoPanel>();
+
+            serviceBuildingInfo.eventVisibilityChanged += serviceBuildingInfo_eventVisibilityChanged;
+
+            var view = UIView.GetAView();
+            optionsWindow = modGameObject.AddComponent<OptionsWindow2>();
+            optionsWindow.transform.parent = view.transform;
+            optionsWindow.Hide();
+
+            buildingInfo.eventVisibilityChanged += buildingInfo_eventVisibilityChanged;
+        }
+
+        private void serviceBuildingInfo_eventVisibilityChanged(UIComponent component, bool value)
+        {
+            serviceWindow.Update();
+        }
         void buildingInfo_eventVisibilityChanged(UIComponent component, bool value)
         {
-            this.buildingWindow.isEnabled = value;
+            buildingWindow.isEnabled = value;
             if (value)
             {
-                this.buildingWindow.Show();
+                buildingWindow.Show();
             }
             else
             {
-                this.buildingWindow.Hide();
+                buildingWindow.Hide();
             }
         }
 
-        public static void LoadMod(LoadMode mode, SaveData2 sd)
+        public static void LoadMod(SaveData2 sd)
         {
+            var loaded = new HashSet<string>();
+
             if (sd.disastersEnabled)
             {
                 modGameObject.AddComponent<Disasters2>();
@@ -150,25 +163,24 @@ namespace DifficultyMod
             for (uint i = 0; i < PrefabCollection<BuildingInfo>.PrefabCount(); i++)
             {
                 var vi = PrefabCollection<BuildingInfo>.GetPrefab(i);
-                AdjustBuildingAI(vi, mapping);
-            }
-
-            for (uint i = 0; i < PrefabCollection<BuildingInfo>.LoadedCount(); i++)
-            {
-                var vi = PrefabCollection<BuildingInfo>.GetLoaded(i);
-                AdjustBuildingAI(vi, mapping);
+                AdjustBuildingAI(vi, mapping, loaded);
             }
 
             if (sd.DifficultyLevel == DifficultyLevel.Vanilla)
             {
                 return;
             }
-
-
-            if (sd.DifficultyLevel == DifficultyLevel.Hard && mode == LoadMode.NewGame)
+            
+            if (sd.DifficultyLevel == DifficultyLevel.Hard && _mode == LoadMode.NewGame)
             {
                 Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.LoanAmount, 3000000, ItemClass.Service.Education, ItemClass.SubService.None, ItemClass.Level.None);
             }
+
+            if (sd.DifficultyLevel == DifficultyLevel.DwarfFortress && _mode == LoadMode.NewGame)
+            {
+                Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.LoanAmount, 4000000, ItemClass.Service.Education, ItemClass.SubService.None, ItemClass.Level.None);
+            }
+
 
             mapping = new Dictionary<Type, Type>
             {
@@ -184,7 +196,7 @@ namespace DifficultyMod
                     ((PassengerTrainAI)vi.m_vehicleAI).m_passengerCapacity = 70;
                 }
                 else {
-                    AdjustVehicleAI(vi, mapping);
+                    AdjustVehicleAI(vi, mapping, loaded);
                 }
             }
             mapping = new Dictionary<Type, Type>
@@ -196,7 +208,7 @@ namespace DifficultyMod
             for (uint i = 0; i < PrefabCollection<CitizenInfo>.PrefabCount(); i++)
             {
                 var vi = PrefabCollection<CitizenInfo>.GetPrefab(i);
-                AdjustResidentAI(vi, mapping);
+                AdjustResidentAI(vi, mapping, loaded);
             }
 
             //mapping = new Dictionary<Type, Type>
@@ -213,10 +225,16 @@ namespace DifficultyMod
             //}
 
             Singleton<UnlockManager>.instance.MilestonesUpdated();
-            DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Loaded proper hardness. " + sd.DifficultyLevel.ToString());
+
+            if (loaded.Count() < 8)
+            {
+                optionsWindow.ShowError();
+            }
+            //Debug.Log(loaded.Count().ToString());
+            //Debug.Log(string.Join(",", loaded.ToArray()));
         }
 
-        private static void AdjustResidentAI(CitizenInfo bi, Dictionary<Type, Type> componentRemap)
+        private static void AdjustResidentAI(CitizenInfo bi, Dictionary<Type, Type> componentRemap, HashSet<string> loaded)
         {
             if (bi == null)
             {
@@ -227,9 +245,12 @@ namespace DifficultyMod
             if (oldAI == null)
                 return;
             var compType = oldAI.GetType();
-            Type newCompType;
-            if (!componentRemap.TryGetValue(compType, out newCompType))
+
+            Type newCompType = GetValue(componentRemap,compType);            
+            if (newCompType == null)
+            {
                 return;
+            }
 
             //UnityEngine.Object.Destroy(oldAI,1f);
             CitizenAI newAI = bi.gameObject.AddComponent(newCompType) as CitizenAI;
@@ -240,9 +261,10 @@ namespace DifficultyMod
                     bi.m_citizenAI = newAI;
                     newAI.InitializeAI();
             }
+            loaded.Add(newCompType.Name);
         }
 
-        private static void AdjustBuildingAI(BuildingInfo bi, Dictionary<Type, Type> componentRemap)
+        private static void AdjustBuildingAI(BuildingInfo bi, Dictionary<Type, Type> componentRemap, HashSet<string> loaded)
         {
             if (bi == null)
             {
@@ -253,9 +275,13 @@ namespace DifficultyMod
             if (oldAI == null)
                 return;
             var compType = oldAI.GetType();
-            Type newCompType;
-            if (!componentRemap.TryGetValue(compType, out newCompType))
+
+            Type newCompType = GetValue(componentRemap, compType);
+            if (newCompType == null)
+            {
                 return;
+            }
+
             var fields = ExtractFields(oldAI);
             UnityEngine.Object.Destroy(oldAI, 1f);
             BuildingAI newAI = bi.gameObject.AddComponent(newCompType) as BuildingAI;
@@ -269,11 +295,11 @@ namespace DifficultyMod
                 newAI.m_info = bi;
                 bi.m_buildingAI = newAI;
                 newAI.InitializePrefab();
-            }
-
+            } 
+            loaded.Add(newCompType.Name);
         }
 
-        private static void AdjustNetAI(NetInfo bi, Dictionary<Type, Type> componentRemap)
+        private static void AdjustNetAI(NetInfo bi, Dictionary<Type, Type> componentRemap, HashSet<string> loaded)
         {
             if (bi == null)
             {
@@ -284,9 +310,13 @@ namespace DifficultyMod
             if (oldAI == null)
                 return;
             var compType = oldAI.GetType();
-            Type newCompType;
-            if (!componentRemap.TryGetValue(compType, out newCompType))
+
+            Type newCompType = GetValue(componentRemap, compType);
+            if (newCompType == null)
+            {
                 return;
+            }
+
             var fields = ExtractFields(oldAI);
             UnityEngine.Object.Destroy(oldAI, 1f);
             NetAI newAI = bi.gameObject.AddComponent(newCompType) as NetAI;
@@ -301,9 +331,10 @@ namespace DifficultyMod
                 bi.m_netAI = newAI;
                 newAI.InitializePrefab();
             }
-
+            loaded.Add(newCompType.Name);
         }
-        private static void AdjustVehicleAI(VehicleInfo vi, Dictionary<Type, Type> componentRemap)
+
+        private static void AdjustVehicleAI(VehicleInfo vi, Dictionary<Type, Type> componentRemap, HashSet<string> loaded)
         {
             if (vi == null)
             {
@@ -313,9 +344,13 @@ namespace DifficultyMod
             if (oldAI == null)
                 return;
             var compType = oldAI.GetType();
-            Type newCompType;
-            if (!componentRemap.TryGetValue(compType, out newCompType))
+
+            Type newCompType = GetValue(componentRemap, compType);
+            if (newCompType == null)
+            {
                 return;
+            }
+
             var fields = ExtractFields(oldAI);
 
             UnityEngine.Object.Destroy(oldAI, 1f);
@@ -331,8 +366,21 @@ namespace DifficultyMod
                 vi.m_vehicleAI = newAI;
                 newAI.InitializeAI();
             }
-
+            loaded.Add(newCompType.Name);
         }
+
+        private static Type GetValue(Dictionary<Type,Type> componentRemap, Type oldType)
+        {
+            foreach (var kvp in componentRemap)
+            {
+                if (kvp.Key.IsAssignableFrom(oldType))
+                {
+                    return kvp.Value;
+                }
+            }
+            return null;
+        }
+
 
         private static Dictionary<string, object> ExtractFields(object a)
         {
@@ -365,11 +413,11 @@ namespace DifficultyMod
             if (_mode != LoadMode.LoadGame && _mode != LoadMode.NewGame)
                 return;
 
-            if (this.buildingWindow != null)
+            if (buildingWindow != null)
             {
-                if (this.buildingWindow.parent != null)
+                if (buildingWindow.parent != null)
                 {
-                    this.buildingWindow.parent.eventVisibilityChanged -= buildingInfo_eventVisibilityChanged;
+                    buildingWindow.parent.eventVisibilityChanged -= buildingInfo_eventVisibilityChanged;
                 }
             }
 

@@ -54,9 +54,11 @@
     <Compile Include="FireSpread.cs" />
     <Compile Include="Disasters.cs" />
     <Compile Include="Helpers\LevelUpHelper.cs" />
+    <Compile Include="Markov\Markov.cs" />
     <Compile Include="ModdingAPI.cs" />
     <Compile Include="panels\BuildingInfoWindow.cs" />
     <Compile Include="panels\OptionsWindow.cs" />
+    <Compile Include="panels\ServiceInfoWindow.cs" />
     <Compile Include="SaveData.cs" />
     <Compile Include="TransportLineAI.cs" />
     <Compile Include="Helpers\CitizenHelper.cs" />
@@ -73,12 +75,50 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="libs\" />
+    <Folder Include="Markov\de\" />
+    <Folder Include="Markov\ko\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Markov\en\descriptionsCommercial.txt" />
+    <EmbeddedResource Include="Markov\en\descriptionsFarm.txt" />
+    <EmbeddedResource Include="Markov\en\descriptionsForest.txt" />
+    <EmbeddedResource Include="Markov\en\descriptionsIndustrial.txt" />
+    <EmbeddedResource Include="Markov\en\descriptionsMine.txt" />
+    <EmbeddedResource Include="Markov\en\descriptionsOffice.txt" />
+    <EmbeddedResource Include="Markov\en\descriptionsOil.txt" />
+    <EmbeddedResource Include="Markov\en\descriptionsResidential.txt" />
+    <EmbeddedResource Include="Markov\en\nameCommercial.txt" />
+    <EmbeddedResource Include="Markov\en\nameFarm.txt" />
+    <EmbeddedResource Include="Markov\en\nameForest.txt" />
+    <EmbeddedResource Include="Markov\en\nameIndustrial.txt" />
+    <EmbeddedResource Include="Markov\en\nameMine.txt" />
+    <EmbeddedResource Include="Markov\en\nameOffice.txt" />
+    <EmbeddedResource Include="Markov\en\nameOil.txt" />
+    <EmbeddedResource Include="Markov\en\nameResidential.txt" />
+    <EmbeddedResource Include="Markov\pt\descriptionsCommercial.txt" />
+    <EmbeddedResource Include="Markov\pt\descriptionsFarm.txt" />
+    <EmbeddedResource Include="Markov\pt\descriptionsForest.txt" />
+    <EmbeddedResource Include="Markov\pt\descriptionsIndustrial.txt" />
+    <EmbeddedResource Include="Markov\pt\descriptionsMine.txt" />
+    <EmbeddedResource Include="Markov\pt\descriptionsOffice.txt" />
+    <EmbeddedResource Include="Markov\pt\descriptionsOil.txt" />
+    <EmbeddedResource Include="Markov\pt\descriptionsResidential.txt" />
+    <EmbeddedResource Include="Markov\pt\nameCommercial.txt" />
+    <EmbeddedResource Include="Markov\pt\nameFarm.txt" />
+    <EmbeddedResource Include="Markov\pt\nameForest.txt" />
+    <EmbeddedResource Include="Markov\pt\nameIndustrial.txt" />
+    <EmbeddedResource Include="Markov\pt\nameMine.txt" />
+    <EmbeddedResource Include="Markov\pt\nameOffice.txt" />
+    <EmbeddedResource Include="Markov\pt\nameOil.txt" />
+    <EmbeddedResource Include="Markov\pt\nameResidential.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>mkdir "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"
 del "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)\$(TargetFileName)"
-xcopy /y "$(TargetPath)" "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"</PostBuildEvent>
+xcopy /y "$(TargetPath)" "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"
+xcopy /y "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\workshop\content\255710\408706691"
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

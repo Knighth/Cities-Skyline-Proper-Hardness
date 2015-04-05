@@ -104,5 +104,6 @@ namespace DifficultyMod
         Vanilla,
         Normal,
         Hard,        
+        DwarfFortress,
     }
 }
