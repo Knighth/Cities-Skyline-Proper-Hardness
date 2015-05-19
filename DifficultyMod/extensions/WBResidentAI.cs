@@ -1018,10 +1018,6 @@ namespace DifficultyMod
                 {
                     num -= 15;
                 }
-                if ((specialPolicies & DistrictPolicies.Special.AllowWeapons) != DistrictPolicies.Special.None)
-                {
-                    num += 5;
-                }
                 if (instance.m_buildings.m_buffer[data.m_homeBuilding].GetLastFrameData().m_fireDamage != 0)
                 {
                     num -= 15;
