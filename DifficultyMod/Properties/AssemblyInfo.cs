@@ -32,5 +32,12 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.*")]
+
+// KH: Following was last published version stamp number by emf
+// probably needs to stay that way for max compatibility.
+//[assembly: AssemblyVersion("1.0.5635.40640")]
+[assembly: AssemblyVersion("1.0.5635.40640")]
+//[assembly: AssemblyVersion("1.0.*")]
 //[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyInformationalVersion("1.0.5635.40640 KHBuild_001")]
+

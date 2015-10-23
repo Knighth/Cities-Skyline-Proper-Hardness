@@ -13,19 +13,72 @@ namespace DifficultyMod
 {
     public class DifficultyMod2 : IUserMod
     {
+        internal const string MOD_NAME = "Proper Hardness Mod - KHFork";
+        internal const string MOD_DESC ="Increased costs, unlock costs (25 tiles), traffic disappear timer, workers need to reach work, and offices spawn more workers."; 
+        internal const string MOD_DLL_NAME = "DifficultyMod";
+        internal const string MOD_LOG_PREFIX = "ProperHardness";
+        internal const string MOD_ORG_CONFIGNAME = "";
+        internal const string MOD_CONFIG_FILENAME = "ProperHardness_KH_config.xml";
+
+        internal static Configuration config;
+        internal static string MOD_VERSION = "";
+        internal static bool DEBUG_LOG_ON = false;
+
         public string Name
         {
             get
             {
-                return "Proper Hardness Mod"; 
+                return MOD_NAME; 
             }
         }
         public string Description
         {
             get
             {
-                return "Increased costs, unlock costs (25 tiles), traffic disappear timer, workers need to reach work, and offices spawn more workers.";
+                return MOD_DESC ;
             }
+        }
+
+        public void OnEnabled()
+        {
+            try
+            {
+                config = Configuration.Deserialize(MOD_CONFIG_FILENAME);
+                if (config == null)
+                {
+                    config = new Configuration();
+                    Configuration.Serialize(MOD_CONFIG_FILENAME, config);
+                }
+                DEBUG_LOG_ON = config.DebugLogging;
+                Logger.dbgLog(string.Concat("v", MOD_VERSION, " has been enabled."));
+            }
+            catch (Exception ex)
+            { Logger.dbgLog("",ex,true); }
+        }
+
+        public void OnRemoved()
+        {
+            try
+            {
+                Logger.dbgLog(String.Concat("v", MOD_VERSION, " has been disabled or unloaded."));
+            }
+            catch(Exception ex)
+            { Logger.dbgLog("", ex, true); }
+        }
+
+        public DifficultyMod2()
+        {
+            try
+            {
+                var attr2 = Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(),
+                    typeof(AssemblyInformationalVersionAttribute)) as AssemblyInformationalVersionAttribute;
+                if (attr2 != null)
+                {
+                    MOD_VERSION = attr2.InformationalVersion; 
+                }
+            }
+            catch(Exception ex)
+            { Debug.Log("ProperHardness: (harmless) Could not get version stamp from assembly: " + ex.Message.ToString()); }
         }
     }
 
@@ -82,22 +135,35 @@ namespace DifficultyMod
 
         public override void OnLevelLoaded(LoadMode mode)
         {
-            if (mode != LoadMode.LoadGame && mode != LoadMode.NewGame)
-                return;
-            _mode = mode;
-
-            SaveData2.ResetData();
-            modGameObject = new GameObject("DifficultyMod");
-            buildingWindowGameObject = new GameObject("BuildingWindow");
-            InitWindows();
-
-            if (SaveData2.MustInitialize())
+            //KH Just wrapped in try catch, don't want this mod fking it up for others due to co's lack of same.
+            try
             {
-                optionsWindow.Show();
+                if (mode != LoadMode.LoadGame && mode != LoadMode.NewGame)
+                    return;
+                _mode = mode;
+
+                SaveData2.ResetData();
+                modGameObject = new GameObject("DifficultyMod");
+
+                buildingWindowGameObject = new GameObject("BuildingWindow");
+                Logger.dbgLog("initializing windows.");
+                InitWindows();
+                Logger.dbgLog("initializing windows completed.");
+
+                if (SaveData2.MustInitialize())
+                {
+                    optionsWindow.Show();
+                }
+                else
+                {
+                    Logger.dbgLog("loading staring.");
+                    LoadMod(SaveData2.saveData);
+                    Logger.dbgLog("loading completed.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                LoadMod(SaveData2.saveData);
+                Logger.dbgLog("OnLevelLoad Exception",ex,true);
             }
         }
 
@@ -410,25 +476,34 @@ namespace DifficultyMod
         }
         public override void OnLevelUnloading()
         {
-            if (_mode != LoadMode.LoadGame && _mode != LoadMode.NewGame)
-                return;
-
-            if (buildingWindow != null)
+            //KH Just wrapped in try catch, don't want this mod fking it up for others due to co's lack of same.
+            try
             {
-                if (buildingWindow.parent != null)
+                if (_mode != LoadMode.LoadGame && _mode != LoadMode.NewGame)
+                    return;
+
+                if (buildingWindow != null)
                 {
-                    buildingWindow.parent.eventVisibilityChanged -= buildingInfo_eventVisibilityChanged;
+                    if (buildingWindow.parent != null)
+                    {
+                        buildingWindow.parent.eventVisibilityChanged -= buildingInfo_eventVisibilityChanged;
+                    }
+                }
+
+                if (modGameObject != null)
+                {
+                    GameObject.Destroy(modGameObject);
+                }
+                if (buildingWindowGameObject != null)
+                {
+                    GameObject.Destroy(buildingWindowGameObject);
                 }
             }
+            catch (Exception ex)
+            {
+                Logger.dbgLog("OnLevelUnLoading Exception!", ex, true);
+            }
 
-            if (modGameObject != null)
-            {
-                GameObject.Destroy(modGameObject);
-            }
-            if (buildingWindowGameObject != null)
-            {
-                GameObject.Destroy(buildingWindowGameObject);
-            }
         }
 
         public static List<UIComponent> FindUIComponents(string searchString)

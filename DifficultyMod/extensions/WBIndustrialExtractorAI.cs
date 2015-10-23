@@ -16,7 +16,10 @@ namespace DifficultyMod
             {
                 int num16;
                 int num17;
-                this.GetPollutionRates(10, out num16, out num17);
+                //KH: This next line need DistrictPolicies.CityPlanning type fed into it.
+                //    That said base obj (IndustrialExtractorAI).getPollutionRates() doesn't actually use it
+                //    so should be no effect...yet anyway right???
+                this.GetPollutionRates(10,DistrictPolicies.CityPlanning.None,  out num16, out num17);
                 Singleton<NaturalResourceManager>.instance.TryDumpResource(NaturalResourceManager.Resource.Pollution, num16, num16, buildingData.m_position, 250f);
             }
 
