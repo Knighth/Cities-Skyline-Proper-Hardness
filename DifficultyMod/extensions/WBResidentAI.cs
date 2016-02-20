@@ -55,6 +55,10 @@ namespace DifficultyMod
         private void ReleaseCitizen(uint citizenID)
         {
             commuteHappinness[citizenID] = 0;
+            //
+            //KH addition 2/19/16
+            commuteWait[citizenID] = 0;
+            //
             Singleton<CitizenManager>.instance.ReleaseCitizen(citizenID);
         }
 
@@ -215,7 +219,7 @@ namespace DifficultyMod
                         }
                     }
                     citizenUnits = nextUnit;
-                    if (++num2 > 0x80000)
+                    if (++num2 > 524288)
                     {
                         CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + System.Environment.StackTrace);
                         break;
@@ -227,12 +231,12 @@ namespace DifficultyMod
         private bool UpdateAge(uint citizenID, ref Citizen data)
         {
             int num = data.Age + 1;
-            if (num <= 0x2d)
+            if (num <= 45)
             {
                 switch (num)
                 {
                     case 15:
-                    case 0x2d:
+                    case 45:
                         this.FinishSchoolOrWork(citizenID, ref data);
                         break;
                 }
@@ -302,7 +306,7 @@ namespace DifficultyMod
                     num += 10;
                 }
                 info.m_buildingAI.GetMaterialAmount(data.m_homeBuilding, ref instance.m_buildings.m_buffer[data.m_homeBuilding], TransferManager.TransferReason.Garbage, out num3, out num4);
-                num3 /= 0x3e8;
+                num3 /= 1000;
                 if (num3 <= 2)
                 {
                     num += 12;
@@ -327,7 +331,7 @@ namespace DifficultyMod
                 Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(ImmaterialResourceManager.Resource.NoisePollution, position, out num8);
                 if (num8 != 0)
                 {
-                    num -= (num8 * 100) / 0xff;
+                    num -= (num8 * 100) / 255;
                 }
                 Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(ImmaterialResourceManager.Resource.CrimeRate, position, out num9);
                 if (num9 > 3)
@@ -380,16 +384,16 @@ namespace DifficultyMod
                         num -= 5;
                     }
                 }
-                if (num10 < 0x23)
+                if (num10 < 35)
                 {
                     num -= num10;
                 }
                 else
                 {
-                    num -= (num10 * 2) - 0x23;
+                    num -= (num10 * 2) - 35;
                 }
                 Singleton<NaturalResourceManager>.instance.CheckPollution(position, out num13);
-                num -= (num13 * 100) / 0xff;
+                num -= (num13 * 100) / 255;
                 num = Mathf.Clamp(num, 0, 100);
                 data.m_health = (byte)num;
                 int num14 = 0;
@@ -403,14 +407,14 @@ namespace DifficultyMod
                     }
                     else if (num7 == 0)
                     {
-                        num14 = 0x4b;
+                        num14 = 75;
                     }
                     else
                     {
                         num14 = 50;
                     }
                 }
-                else if (num <= 0x19)
+                else if (num <= 25)
                 {
                     data.BadHealth = 0;
                     num14 += 10;
@@ -983,6 +987,7 @@ namespace DifficultyMod
             return TransferManager.TransferReason.Shopping;
         }
 
+
         private void UpdateWellbeing(uint citizenID, ref Citizen data)
         {
             if (data.m_homeBuilding != 0)
@@ -1169,6 +1174,20 @@ namespace DifficultyMod
                         num -= 5;
                     }
                 }
+
+                //kh addition for snowfall
+                bool flag2;
+                Singleton<WaterManager>.instance.CheckHeating(position, out flag2);
+                if (flag2)
+                {
+                    num += 5;
+                }
+                else if ((servicePolicies & DistrictPolicies.Services.NoElectricity) != DistrictPolicies.Services.None)
+                {
+                    num -= 10;
+                }
+
+
                 int workRequirement = Citizen.GetWorkRequirement(agePhase);
                 if (workRequirement != 0)
                 {
@@ -1263,7 +1282,7 @@ namespace DifficultyMod
                             break;
                     }
                 }
-                if (none != TransferManager.TransferReason.None)
+                if (none != TransferManager.TransferReason.None && (none != TransferManager.TransferReason.Student3 || (servicePolicies & DistrictPolicies.Services.SchoolsOut) == DistrictPolicies.Services.None || age % 5 > 1))
                 {
                     TransferManager.TransferOffer offer2 = new TransferManager.TransferOffer
                     {
@@ -1288,15 +1307,20 @@ namespace DifficultyMod
                 if (vehicle != 0)
                 {
                     VehicleInfo info = instance2.m_vehicles.m_buffer[(int)vehicle].Info;
-                    uint citizen = info.m_vehicleAI.GetOwnerID(vehicle, ref instance2.m_vehicles.m_buffer[(int)vehicle]).Citizen;
-                    if (citizen == citizenData.m_citizen)
+                    if (info != null)
                     {
-                        info.m_vehicleAI.SetTarget(vehicle, ref instance2.m_vehicles.m_buffer[(int)vehicle], 0);
+                        uint citizen = info.m_vehicleAI.GetOwnerID(vehicle, ref instance2.m_vehicles.m_buffer[(int)vehicle]).Citizen;
+                        if (citizen == citizenData.m_citizen)
+                        {
+                            info.m_vehicleAI.SetTarget(vehicle, ref instance2.m_vehicles.m_buffer[(int)vehicle], 0);
+                            return false;
+                        }
+                        else
+                        {
+                            instance.m_citizens.m_buffer[(int)((UIntPtr)citizenData.m_citizen)].SetVehicle(citizenData.m_citizen, 0, 0u);
+                        }
                     }
-                    else
-                    {
-                        instance.m_citizens.m_buffer[(int)((UIntPtr)citizenData.m_citizen)].SetVehicle(citizenData.m_citizen, 0, 0u);
-                    }
+                    instance.m_citizens.m_buffer[(int)((UIntPtr)citizenData.m_citizen)].SetVehicle(citizenData.m_citizen, 0, 0u);
                     return false;
                 }
             }

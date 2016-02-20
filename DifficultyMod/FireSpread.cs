@@ -76,8 +76,9 @@ namespace DifficultyMod
             int num2;
             int num3;
             info.m_buildingAI.GetFireParameters(buildingID, ref buildingData, out num, out num2, out num3);
+            ItemClass.CollisionType tmpIC = 0;
             if (num != 0 && (buildingData.m_flags & (Building.Flags.Completed | Building.Flags.Abandoned)) == Building.Flags.Completed
-                && buildingData.m_fireIntensity == 0 && buildingData.GetLastFrameData().m_fireDamage == 0 && buildingData.OverlapQuad( buildingID, quad, minY, maxY))
+                && buildingData.m_fireIntensity == 0 && buildingData.GetLastFrameData().m_fireDamage == 0 && buildingData.OverlapQuad( buildingID, quad, minY, maxY,tmpIC))
             {
                 if (fireSet.Contains(buildingID))
                 {

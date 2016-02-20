@@ -11,9 +11,11 @@ No plans for actual enhancements, more of just maybe helping other people to get
 ie.. get it 'functional' as is, then someone else can take over changing\adding too it etc.
 
 
-Current Progress 7pm 10/23/2015
+Current Progress 10pm 2/19/2015
 ----------------------------
+Fork build 002 - snowfall compatibility update.
 
+oct 2014:
 Fork - KH_Build_001
 - Mod loads and seems to work in a couple cities without blowing up.. building info shows, buildings seem
 to actually grow, no real idea if it's 'really' working atm though but changing hard-ness does seem to have
