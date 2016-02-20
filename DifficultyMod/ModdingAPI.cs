@@ -39,7 +39,9 @@ namespace DifficultyMod
             Level targetLevel = Level.Level5;
             for (var i = 0; i < 5; i += 1)
             {
-                if (serviceScore < levelUpHelper.GetServiceThreshhold((ItemClass.Level)i, zone) || (buildingWealth != 0 && buildingWealth < levelUpHelper.GetWealthThreshhold((ItemClass.Level)i, zone)) || education < levelUpHelper.GetEducationThreshhold((ItemClass.Level)i, zone))
+                if (serviceScore < levelUpHelper.GetServiceThreshhold((ItemClass.Level)i, zone) ||
+                    (buildingWealth != 0 && buildingWealth < levelUpHelper.GetWealthThreshhold((ItemClass.Level)i, zone)) ||
+                    education < levelUpHelper.GetEducationThreshhold((ItemClass.Level)i, zone))
                 {
                     targetLevel = (Level)i;
                     levelUp.landValueProgress = 1 + CalcProgress(serviceScore, levelUpHelper.GetServiceThreshhold((ItemClass.Level)i, zone), levelUpHelper.GetServiceThreshhold((ItemClass.Level)(i - 1), zone), 7) + CalcProgress(buildingWealth, levelUpHelper.GetWealthThreshhold((ItemClass.Level)i, zone), levelUpHelper.GetWealthThreshhold((ItemClass.Level)(i - 1), zone), 8);
@@ -48,7 +50,8 @@ namespace DifficultyMod
                 }
             }
 
-            levelUp.landValueTooLow = (serviceScore < levelUpHelper.GetServiceThreshhold((ItemClass.Level)(Math.Max(-1, (int)currentLevel - 2)), zone)) || (buildingWealth != 0 && buildingWealth < levelUpHelper.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)currentLevel - 2)), zone));
+            levelUp.landValueTooLow = (serviceScore < levelUpHelper.GetServiceThreshhold((ItemClass.Level)(Math.Max(-1, (int)currentLevel - 2)), zone)) ||
+                (buildingWealth != 0 && buildingWealth < levelUpHelper.GetWealthThreshhold((ItemClass.Level)(Math.Max(-1, (int)currentLevel - 2)), zone));
             
             if (targetLevel < currentLevel)
             {

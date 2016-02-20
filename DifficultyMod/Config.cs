@@ -13,7 +13,7 @@ namespace DifficultyMod
         public bool DebugLogging = false;
         public byte DebugLoggingLevel = 0;
         public bool UseCustomLogFile = false;
-        public string CustomLogFilePath = DifficultyMod2.MOD_CONFIG_FILENAME;
+        public string CustomLogFilePath = DifficultyMod2.MOD_CUSTOM_LOG_NAME;
 
         public static void Serialize(string filename, Configuration config)
         {

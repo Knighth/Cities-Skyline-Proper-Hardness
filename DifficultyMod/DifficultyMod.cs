@@ -19,6 +19,7 @@ namespace DifficultyMod
         internal const string MOD_LOG_PREFIX = "ProperHardness";
         internal const string MOD_ORG_CONFIGNAME = "";
         internal const string MOD_CONFIG_FILENAME = "ProperHardness_KH_config.xml";
+        internal const string MOD_CUSTOM_LOG_NAME = "ProperHardness_KH.log";
 
         internal static Configuration config;
         internal static string MOD_VERSION = "";
@@ -408,7 +409,9 @@ namespace DifficultyMod
             }
             var oldAI = vi.GetComponent<VehicleAI>();
             if (oldAI == null)
+            {
                 return;
+            }
             var compType = oldAI.GetType();
 
             Type newCompType = GetValue(componentRemap, compType);
@@ -433,6 +436,7 @@ namespace DifficultyMod
                 newAI.InitializeAI();
             }
             loaded.Add(newCompType.Name);
+            Logger.dbgLog("adjusted Vehicle ai " + vi.name.ToString());
         }
 
         private static Type GetValue(Dictionary<Type,Type> componentRemap, Type oldType)

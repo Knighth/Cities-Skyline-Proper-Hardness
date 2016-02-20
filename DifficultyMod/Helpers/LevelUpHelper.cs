@@ -253,14 +253,14 @@ namespace DifficultyMod
             CitizenManager instance = Singleton<CitizenManager>.instance;
             uint num = buildingData.m_citizenUnits;
             int num2 = 0;
+            //Logger.dbgLog("FirstCitizenUnitInBuilding: " + num.ToString());
             while (num != 0u)
             {
+                //Logger.dbgLog("Checking Unit #: " + num.ToString());
                 GetCommute(instance.m_units.m_buffer[(int)((UIntPtr)num)], ref commuteTotal, ref count);
+                //Logger.dbgLog("ctotal: " + commuteTotal.ToString() + " count: " + count.ToString());
                 num = instance.m_units.m_buffer[(int)((UIntPtr)num)].m_nextUnit;
-                //KH investigating idle communte always zero issue; think this is why, ie author 
-                //never upped the counter so it was always zero.
 
-                //
                 if (++num2 > 524288)
                 {
                     CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
@@ -273,18 +273,15 @@ namespace DifficultyMod
             }
             else
             {
+                //Logger.dbgLog("out of while() count == " + count.ToString());
                 commute = (commuteTotal * 100) / (float)(count * 255);
+                //Logger.dbgLog(String.Concat("Building #: ", buildingID.ToString(), "  commute: ", commute.ToString(), "  commutetotal: ", commuteTotal.ToString(), "  count: ", count.ToString()));
             }
-#if DEBUG
-            if (Singleton<SimulationManager>.instance.m_randomizer.Int32(2) == 0)
-            {
-                Logger.dbgLog(String.Concat("Building #: ", buildingID.ToString(), "  commute: ", commute.ToString(), "  commutetotal: ",commuteTotal.ToString(), "  count: ",count.ToString())); 
-            }
-#endif
         }
 
         public void GetCommute(CitizenUnit unit, ref int commute, ref int count)
         {
+            //Logger.dbgLog(string.Concat("ref commute:", commute.ToString()," count:",count.ToString()," blding:",unit.m_building.ToString()," nUnit:",unit.m_nextUnit.ToString()));
             CitizenManager instance = Singleton<CitizenManager>.instance;
             if (unit.m_citizen0 != 0u)
             {

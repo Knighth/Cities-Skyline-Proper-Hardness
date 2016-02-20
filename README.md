@@ -13,6 +13,7 @@ ie.. get it 'functional' as is, then someone else can take over changing\adding 
 
 Current Progress 10pm 2/19/2015
 ----------------------------
+fork build 003 - minor tweak to fix idle commute time issue;clear counter on citizen death.
 Fork build 002 - snowfall compatibility update.
 
 oct 2014:

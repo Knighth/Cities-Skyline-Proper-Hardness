@@ -23,11 +23,14 @@ namespace DifficultyMod
 
         private static void AddCommuteWait(uint citizen,int p)
         {
+            //Logger.dbgLog("c: "+ citizen.ToString() + " adding " + p.ToString() + " to " + commuteWait[citizen].ToString());
             commuteWait[citizen] = (byte)Mathf.Clamp((int)commuteWait[citizen] + p, 0, 255);
+            //if (commuteWait[citizen] >= 8) { Logger.dbgLog("cw>=8"); }
         }
 
         internal static void AddCommuteWait(Vehicle data, int p)
         {
+            //Logger.dbgLog("adding commutewait vech");
             CitizenManager instance = Singleton<CitizenManager>.instance;
             uint num = data.m_citizenUnits;
             int num2 = 0;
@@ -91,7 +94,13 @@ namespace DifficultyMod
             BuildingInfo info = manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding].Info;
             int amountDelta = 50;
             info.m_buildingAI.ModifyMaterialBuffer(citizenData.m_sourceBuilding, ref manager2.m_buildings.m_buffer[citizenData.m_sourceBuilding], TransferManager.TransferReason.Worker0, ref amountDelta);
-            commuteHappinness[citizen] = (byte)Mathf.Clamp((int)(((int)commuteHappinness[citizen] * 3.0 + (int)commuteWait[citizen]) / 4.0), 0, 255);
+            //Logger.dbgLog(citizen.ToString() + "  chappy was:" + commuteHappinness[citizen].ToString() + " *3.0 + cwait:"+ commuteWait[citizen].ToString() + " // 4  will be: " + (((int)commuteHappinness[citizen] * 3.0 + (int)commuteWait[citizen]) / 4.0).ToString());
+            commuteHappinness[citizen] = (byte)Mathf.Clamp((int)( ( (int)commuteHappinness[citizen] * 3.0 + (int)commuteWait[citizen]) / 4.0), 0, 255);
+            commuteWait[citizen] = 0;
+//            if (commuteHappinness[citizen] > 0)
+//            { 
+//                Logger.dbgLog(citizen.ToString() + "  chappy now:" + commuteHappinness[citizen].ToString() + "cwait:" + commuteWait[citizen].ToString()); 
+//            }
         }
 
         protected void StartJourney(uint citizen, Citizen data)
