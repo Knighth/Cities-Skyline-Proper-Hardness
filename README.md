@@ -11,8 +11,9 @@ No plans for actual enhancements, more of just maybe helping other people to get
 ie.. get it 'functional' as is, then someone else can take over changing\adding too it etc.
 
 
-Current Progress 10pm 2/19/2015
+Current Progress 2/21/2015
 ----------------------------
+fork build 004 - adjust serviceInfoWindows to avoid overlappping text - adjusted Y offsets.
 fork build 003 - minor tweak to fix idle commute time issue;clear counter on citizen death.
 Fork build 002 - snowfall compatibility update.
 

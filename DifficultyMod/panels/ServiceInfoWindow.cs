@@ -68,7 +68,7 @@ namespace DifficultyMod
                     var radius = (int)(((FireStationAI)data.Info.m_buildingAI).m_fireDepartmentRadius / 8);
                     sb.AppendLine("Radius: " + radius.ToString());
                     sb.AppendLine("Kittens Saved: " + GetLlamaSightings(1.4));
-                    ii += 3;
+                    ii += 90;
                 }
                 else if (ai is MonumentAI)
                 {
@@ -78,7 +78,7 @@ namespace DifficultyMod
                     sb.AppendLine("Radius: " + radius.ToString());
                     var tourism = (int)(((MonumentAI)data.Info.m_buildingAI).m_attractivenessAccumulation * productionRate / 100);
                     sb.AppendLine("Attractiveness: " + tourism);
-                    ii += 3;
+                    ii += 90;
                 }
                 else if (ai is HospitalAI)
                 {
@@ -87,7 +87,7 @@ namespace DifficultyMod
                     sb.AppendLine("Healthcare: " + strength.ToString());
                     var radius = (int)(((HospitalAI)data.Info.m_buildingAI).m_healthCareRadius / 8);
                     sb.AppendLine("Radius: " + radius.ToString());
-                    ii += 2;
+                    ii += 90;
                 }
                 else if (ai is CemeteryAI)
                 {
@@ -96,7 +96,7 @@ namespace DifficultyMod
                     var radius = (int)(((CemeteryAI)data.Info.m_buildingAI).m_deathCareRadius / 8);
                     sb.AppendLine("Radius: " + radius.ToString());
                     sb.AppendLine("Bodies Misplaced: " + GetLlamaSightings(0.4));
-                    ii += 3;
+                    ii += 90;
                 }
                 else if (ai is ParkAI)
                 {
@@ -105,7 +105,7 @@ namespace DifficultyMod
                     var radius = (int)(((ParkAI)data.Info.m_buildingAI).m_entertainmentRadius / 8);
                     sb.AppendLine("Radius: " + radius.ToString());
                     sb.AppendLine("Llamas Sighted: " + GetLlamaSightings(2));
-                    ii += 3;
+                    ii += 90;
                 }
                 else if (ai is SchoolAI)
                 {
@@ -114,7 +114,7 @@ namespace DifficultyMod
                     var radius = (int)(((SchoolAI)data.Info.m_buildingAI).m_educationRadius / 8);
                     sb.AppendLine("Radius: " + radius.ToString());
                     sb.AppendLine("Classes Skipped: " + GetLlamaSightings(2));
-                    ii += 3;
+                    ii += 90;
 
                 }
                 else if (ai is PoliceStationAI)
@@ -123,7 +123,7 @@ namespace DifficultyMod
                     sb.AppendLine("Police: " + strength.ToString());
                     var radius = (int)(((PoliceStationAI)data.Info.m_buildingAI).m_policeDepartmentRadius / 8);
                     sb.AppendLine("Radius: " + radius.ToString());
-                    ii += 2;
+                    ii += 60;
                 }
                 else if (ai is CargoStationAI)
                 {
@@ -131,9 +131,12 @@ namespace DifficultyMod
                     sb.AppendLine("Cargo: " + strength.ToString());
                     var radius = (int)(((CargoStationAI)data.Info.m_buildingAI).m_cargoTransportRadius / 8);
                     sb.AppendLine("Radius: " + radius.ToString());
-                    ii += 2;
+                    ii += 60;
                 }
-                label1.relativePosition = new Vector3(0, info.height + info.relativePosition.y - 14 * ii);
+                //label1.relativePosition = new Vector3(0, info.height + info.relativePosition.y - 14 * ii);
+                //nobad:34
+                //label1.relativePosition = new Vector3(0, info.height + info.relativePosition.y - 34 * ii);
+                label1.relativePosition = new Vector3(0, info.height + info.relativePosition.y - ii);
                 label1.text = sb.ToString();
             }
 
