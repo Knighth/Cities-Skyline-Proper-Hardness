@@ -11,6 +11,9 @@ No plans for actual enhancements, more of just maybe helping other people to get
 ie.. get it 'functional' as is, then someone else can take over changing\adding too it etc.
 
 
+This code has not been touched since Snowfall and I have stopped any work related to it and 
+will not be updating it for future patches.
+
 Current Progress 2/21/2015
 ----------------------------
 fork build 004 - adjust serviceInfoWindows to avoid overlappping text - adjusted Y offsets.
